@@ -1,7 +1,7 @@
-package com.carto.androidtest.data_source.remote
+package com.carto.androidtest.data_source.remote.network
 
-import com.carto.androidtest.PoisResponse
 import com.carto.androidtest.data_source.remote.model.PoiDTO
+import com.carto.androidtest.data_source.remote.network.response.PoisResponse
 import retrofit2.Call
 import retrofit2.http.GET
 import retrofit2.http.Query
