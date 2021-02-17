@@ -10,5 +10,16 @@
         android:id="@+id/mapFragment"
         android:name="com.carto.androidtest.ui.map.MapFragment"
         android:label="fragment_map"
-        tools:layout="@layout/fragment_map" />
+        tools:layout="@layout/fragment_map">
+
+        <action
+            android:id="@+id/to_poisBottomSheetDialogFragment"
+            app:destination="@id/poisBottomSheetDialogFragment" />
+    </fragment>
+
+    <dialog
+        android:id="@+id/poisBottomSheetDialogFragment"
+        android:name="com.carto.androidtest.ui.pois.PoisListDialogFragment"
+        android:label="fragment_pois_dialog_list_dialog"
+        tools:layout="@layout/fragment_dialog_pois_list" />
 </navigation>
