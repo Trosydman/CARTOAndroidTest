@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<navigation xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/nav_graph">
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/mapFragment">
 
+    <fragment
+        android:id="@+id/mapFragment"
+        android:name="com.carto.androidtest.ui.map.MapFragment"
+        android:label="fragment_map"
+        tools:layout="@layout/fragment_map">
+
+        <action
+            android:id="@+id/to_poisBottomSheetDialogFragment"
+            app:destination="@id/poisBottomSheetDialogFragment" />
+    </fragment>
+
+    <dialog
+        android:id="@+id/poisBottomSheetDialogFragment"
+        android:name="com.carto.androidtest.ui.pois.PoisListDialogFragment"
+        android:label="fragment_pois_dialog_list_dialog"
+        tools:layout="@layout/fragment_dialog_pois_list" />
 </navigation>
