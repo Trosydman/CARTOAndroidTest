@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:behavior_hideable="true"
+    app:behavior_peekHeight="200dp"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/poiImage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        app:layout_constraintBottom_toTopOf="@id/sheetHeader"
+        app:layout_constraintEnd_toEndOf="@+id/sheetHeader"
+        app:layout_constraintHeight_max="120dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="?android:attr/colorBackground" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/directionsFAB"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:layout_constraintBottom_toTopOf="@id/sheetHeader"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/sheetHeader"
+        app:srcCompat="@drawable/ic_assistant_direction"
+        tools:ignore="ContentDescription" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/sheetHeader"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="?colorPrimary"
+        app:layout_constraintBottom_toTopOf="@id/sheetBody"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/poiImage"
+        app:layout_constraintVertical_chainStyle="packed">
+
+        <TextView
+            android:id="@+id/poiTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="24dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textAppearance="?textAppearanceBody1"
+            android:textColor="?colorOnPrimary"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toTopOf="@id/poiDirectionIcon"
+            app:layout_constraintEnd_toStartOf="@+id/timeToPoi"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.5"
+            app:layout_constraintVertical_chainStyle="packed"
+            tools:text="Sydney Harbour Bridge" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/poiDirectionIcon"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="16dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toStartOf="@id/distanceToPoi"
+            app:layout_constraintStart_toStartOf="@+id/poiTitle"
+            app:layout_constraintTop_toBottomOf="@+id/poiTitle"
+            tools:srcCompat="@drawable/direction_n" />
+
+        <TextView
+            android:id="@+id/distanceToPoi"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginStart="2dp"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:textAppearance="?textAppearanceBody2"
+            android:textColor="?colorOnPrimary"
+            app:layout_constraintBottom_toBottomOf="@+id/poiDirectionIcon"
+            app:layout_constraintEnd_toEndOf="@+id/poiTitle"
+            app:layout_constraintStart_toEndOf="@+id/poiDirectionIcon"
+            app:layout_constraintTop_toTopOf="@+id/poiDirectionIcon"
+            tools:text="300 km" />
+
+        <TextView
+            android:id="@+id/timeToPoi"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:textAppearance="?textAppearanceBody2"
+            android:textColor="?colorOnPrimary"
+            app:layout_constraintBottom_toBottomOf="@+id/distanceToPoi"
+            app:layout_constraintEnd_toEndOf="@+id/guideline_fabCenter"
+            app:layout_constraintStart_toStartOf="@+id/guideline_fabCenter"
+            app:layout_constraintTop_toBottomOf="@+id/poiTitle"
+            tools:text="3.56h" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline_fabCenter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_end="44dp" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/sheetBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?android:attr/colorBackground"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/sheetHeader">
+
+        <TextView
+            android:id="@+id/poiDescription"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="16dp"
+            android:ellipsize="end"
+            android:textAppearance="?textAppearanceBody2"
+            android:textColor="?colorOnBackground"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas elementum consequat ipsum in cursus. " />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
