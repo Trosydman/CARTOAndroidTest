@@ -8,6 +8,8 @@ import androidx.lifecycle.lifecycleScope
 import com.carto.androidtest.BuildConfig
 import com.carto.androidtest.R
 import com.carto.androidtest.databinding.FragmentMapBinding
+import com.carto.androidtest.domain.model.Poi
+import com.carto.androidtest.toPx
 import com.carto.androidtest.ui.MainEvents
 import com.carto.androidtest.ui.MainStates.MapStates
 import com.carto.androidtest.ui.MainViewModel
@@ -99,6 +101,22 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
             }
         }
 
+        viewModel.pois.observe(viewLifecycleOwner) {
+            if (it.isNotEmpty()) {
+                val markerBounds = addMarkers(it)
+                map.animateCamera(CameraUpdateFactory.newLatLngBounds(markerBounds,
+                    CAMERA_BOUNDS_PADDING.toPx()), object : GoogleMap.CancelableCallback {
+                    override fun onFinish() {
+                        map.setLatLngBoundsForCameraTarget(markerBounds)
+                    }
+
+                    override fun onCancel() {
+                        // TODO
+                    }
+                })
+            }
+        }
+
         initViews()
     }
 
@@ -180,5 +198,22 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
                 // TODO
             }
         }
+    }
+
+    private fun addMarkers(pois: List<Poi>): LatLngBounds {
+        val boundsBuilder = LatLngBounds.Builder()
+
+        pois.forEach { poi ->
+            val latLng = LatLng(poi.latitude, poi.longitude)
+            val markerTitle = poi.id
+            val newMarker = MarkerOptions()
+                .title(markerTitle)
+                .position(latLng)
+
+            map.addMarker(newMarker)
+            boundsBuilder.include(latLng)
+        }
+
+        return boundsBuilder.build()
     }
 }

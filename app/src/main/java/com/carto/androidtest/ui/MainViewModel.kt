@@ -1,19 +1,24 @@
 package com.carto.androidtest.ui
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.carto.androidtest.BuildConfig
 import com.carto.androidtest.repository.PoiRepository
 import com.carto.androidtest.ui.MainEvents.MapEvents
 import com.carto.androidtest.ui.MainStates.MapStates
+import com.carto.androidtest.utils.Result
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
+const val CURRENT_FAKE_LOCATION_ID = "0"
 const val CURRENT_FAKE_LOCATION_LAT = -33.3000802
 const val CURRENT_FAKE_LOCATION_LNG = 149.0913524
 
@@ -25,6 +30,26 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
 
     private val statesChannel = Channel<MainStates>()
     val states = statesChannel.receiveAsFlow()
+
+    val pois = repository.getPois().map {
+        when(it) {
+            is Result.Loading -> TODO()
+            is Result.Success -> {
+                val poisList = it.data
+
+                if (poisList.isEmpty()) {
+                    // TODO as in Result.Error alternative
+                }
+
+                poisList
+            }
+            is Result.Error -> {
+                // TODO
+
+                emptyList()
+            }
+        }
+    }.asLiveData()
 
     init {
         viewModelScope.launch {
