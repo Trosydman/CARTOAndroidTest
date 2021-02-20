@@ -3,8 +3,11 @@ package com.carto.androidtest.ui.custom
 import android.annotation.SuppressLint
 import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.content.ContextCompat
 import com.carto.androidtest.databinding.BottomSheetPoiDetailsBinding
+import com.carto.androidtest.domain.model.Poi
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.squareup.picasso.Picasso
 
 @SuppressLint("ClickableViewAccessibility")
 class PoiDetailsBottomSheet(bottomSheet: ConstraintLayout) {
@@ -25,6 +28,8 @@ class PoiDetailsBottomSheet(bottomSheet: ConstraintLayout) {
 
     var onVisibilityChangedListener: OnVisibilityChangedListener? = null
     var onClickListener: OnClickListener? = null
+
+    var currentPoiId: String? = null
 
     init {
         bottomSheetBehaviour.state = BottomSheetBehavior.STATE_HIDDEN
@@ -62,11 +67,39 @@ class PoiDetailsBottomSheet(bottomSheet: ConstraintLayout) {
 
     fun isShown() = bottomSheetBehaviour.state != BottomSheetBehavior.STATE_HIDDEN
 
-    fun show() {
+    fun hide() {
+        bottomSheetBehaviour.state = BottomSheetBehavior.STATE_HIDDEN
+    }
+
+    fun showDetails(poi: Poi) {
+        if (currentPoiId != poi.id) {
+            currentPoiId = poi.id
+            fillDetails(poi)
+        }
+
+        show()
+    }
+
+    private fun show() {
         bottomSheetBehaviour.state = BottomSheetBehavior.STATE_COLLAPSED
     }
 
-    fun hide() {
-        bottomSheetBehaviour.state = BottomSheetBehavior.STATE_HIDDEN
+    private fun fillDetails(poi: Poi) {
+        with(binding) {
+            Picasso.get()
+                .load(poi.image)
+                .fit()
+                .centerCrop()
+                .placeholder(android.R.drawable.ic_menu_camera)
+                .error(android.R.drawable.ic_delete)
+                .into(poiImage)
+
+            poiTitle.text = poi.title
+            poiDirectionIcon.setImageDrawable(ContextCompat.getDrawable(root.context,
+                poi.directionImage))
+//            distanceToPoi.text =
+//            timeToPoi.text =
+            poiDescription.text = poi.description
+        }
     }
 }
