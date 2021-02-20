@@ -4,16 +4,23 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import com.carto.androidtest.BuildConfig
 import com.carto.androidtest.R
 import com.carto.androidtest.databinding.FragmentMapBinding
+import com.carto.androidtest.ui.MainEvents
+import com.carto.androidtest.ui.MainStates.MapStates
 import com.carto.androidtest.ui.MainViewModel
 import com.carto.androidtest.ui.custom.PoiDetailsBottomSheet
 import com.carto.androidtest.ui.custom.RouteDetailsView
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 const val MAP_MIN_ZOOM = 6.5f
 const val CAMERA_BOUNDS_PADDING = 60
@@ -69,8 +76,45 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
         super.onViewCreated(view, savedInstanceState)
 
         _binding = FragmentMapBinding.bind(view)
-        initMap()
+
+        lifecycleScope.launchWhenStarted {
+            initMap()
+            viewModel.states.collect {
+                when (it) {
+
+                    is MapStates.ApplyInitialMapSetup -> {
+                        applyInitialMapSetup()
+                    }
+
+                    is MapStates.AddCurrentFakeLocationMarker -> {
+                        addCurrentLocationMarker(it.location)
+                    }
+
+                    else -> {
+                        if (BuildConfig.DEBUG) {
+                            throw IllegalStateException("Unknown state: ${it::class.java.simpleName}")
+                        }
+                    }
+                }
+            }
+        }
+
         initViews()
+    }
+
+    private fun applyInitialMapSetup() {
+        map.uiSettings.isMapToolbarEnabled = false
+        map.setMinZoomPreference(MAP_MIN_ZOOM)
+    }
+
+    private fun addCurrentLocationMarker(location: LatLng) {
+        val blueDotIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_bluedot)
+        currentLocationMarker = MarkerOptions()
+            .position(location)
+            .icon(blueDotIcon)
+
+        map.addMarker(currentLocationMarker)
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, MapZoomLevel.CONTINENT.level))
     }
 
     override fun onDestroyView() {
@@ -84,6 +128,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
         map = googleMap
         map.setOnMarkerClickListener(this)
         map.setOnMyLocationButtonClickListener(this)
+        sendEvent(MainEvents.MapEvents.OnMapReady)
         // TODO
     }
 
@@ -94,6 +139,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
 
     override fun onMyLocationButtonClick(): Boolean {
         // TODO
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLocationMarker?.position, 15f))
         return false
     }
 
@@ -110,6 +156,10 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
         mapFragment?.getMapAsync(this)
     }
 
+    private fun sendEvent(event: MainEvents) = lifecycleScope.launch {
+        viewModel.eventsChannel.send(event)
+    }
+
     private fun initViews() {
         with(binding) {
             poiDetailsSheet = PoiDetailsBottomSheet(poiDetailsBottomSheet.root).apply {
@@ -119,6 +169,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
 
             currentLocationFAB.setOnClickListener {
                 // TODO
+                poiDetailsSheet?.show()
             }
 
             searchButton.setOnClickListener {
