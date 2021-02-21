@@ -11,6 +11,7 @@ import com.carto.androidtest.databinding.FragmentMapBinding
 import com.carto.androidtest.domain.model.Poi
 import com.carto.androidtest.toPx
 import com.carto.androidtest.ui.MainEvents
+import com.carto.androidtest.ui.MainEvents.MapEvents
 import com.carto.androidtest.ui.MainStates.MapStates
 import com.carto.androidtest.ui.MainViewModel
 import com.carto.androidtest.ui.custom.PoiDetailsBottomSheet
@@ -29,8 +30,7 @@ const val CAMERA_BOUNDS_PADDING = 60
 
 @AndroidEntryPoint
 class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDetailsBottomSheet.OnClickListener,
-    RouteDetailsView.OnClickListener, GoogleMap.OnMarkerClickListener,
-    GoogleMap.OnMyLocationButtonClickListener {
+    RouteDetailsView.OnClickListener, GoogleMap.OnMarkerClickListener {
 
     enum class MapZoomLevel(val level: Float) {
         WORLD(1f),
@@ -145,9 +145,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
         map.setOnMarkerClickListener(this)
-        map.setOnMyLocationButtonClickListener(this)
-        sendEvent(MainEvents.MapEvents.OnMapReady)
-        // TODO
+        sendEvent(MapEvents.OnMapReady)
     }
 
     override fun onMarkerClick(marker: Marker?): Boolean {
@@ -155,10 +153,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
         return false
     }
 
-    override fun onMyLocationButtonClick(): Boolean {
-        // TODO
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLocationMarker?.position, 15f))
-        return false
+        return true
     }
 
     override fun onDirectionsFabClicked() {
