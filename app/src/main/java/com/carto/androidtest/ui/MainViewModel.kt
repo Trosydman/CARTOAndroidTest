@@ -1,9 +1,8 @@
 package com.carto.androidtest.ui
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.carto.androidtest.BuildConfig
+import com.carto.androidtest.domain.model.Poi
 import com.carto.androidtest.repository.PoiRepository
 import com.carto.androidtest.ui.MainEvents.MapEvents
 import com.carto.androidtest.ui.MainStates.MapStates
@@ -51,6 +50,10 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
         }
     }.asLiveData()
 
+    private val _selectedPoi = MutableLiveData<Poi>()
+    val selectedPoi: LiveData<Poi>
+        get() = _selectedPoi
+
     init {
         viewModelScope.launch {
             events.collect {
@@ -61,6 +64,22 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
                         sendStateToUI(MapStates.AddCurrentFakeLocationMarker(LatLng(
                             CURRENT_FAKE_LOCATION_LAT, CURRENT_FAKE_LOCATION_LNG
                         )))
+                    }
+
+                    is MapEvents.OnMarkerClicked -> {
+                        _selectedPoi.value = pois.value?.first{ poi ->
+                            poi.id == it.relatedPoiId
+                        }
+                        sendStateToUI(MapStates.HideCurrentLocationFab)
+                    }
+
+                    is MapEvents.OnPoiDetailsHide ->{
+                        sendStateToUI(MapStates.ShowCurrentLocationFab)
+                        sendStateToUI(MapStates.ResetHighlightedMarker)
+                    }
+
+                    is MapEvents.OnCurrentLocationMarkerClicked -> {
+                        sendStateToUI(MapStates.HidePoiDetails)
                     }
 
                     else -> {

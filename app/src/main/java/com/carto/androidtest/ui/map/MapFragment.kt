@@ -10,12 +10,14 @@ import com.carto.androidtest.R
 import com.carto.androidtest.databinding.FragmentMapBinding
 import com.carto.androidtest.domain.model.Poi
 import com.carto.androidtest.toPx
+import com.carto.androidtest.ui.CURRENT_FAKE_LOCATION_ID
 import com.carto.androidtest.ui.MainEvents
 import com.carto.androidtest.ui.MainEvents.MapEvents
 import com.carto.androidtest.ui.MainStates.MapStates
 import com.carto.androidtest.ui.MainViewModel
 import com.carto.androidtest.ui.custom.PoiDetailsBottomSheet
 import com.carto.androidtest.ui.custom.RouteDetailsView
+import com.carto.androidtest.utils.extensions.isMyCurrentLocation
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -47,7 +49,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
             }
 
             override fun onHide() {
-                // TODO
+                sendEvent(MapEvents.OnPoiDetailsHide)
             }
 
         }
@@ -72,6 +74,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
 
     private lateinit var map: GoogleMap
     private var currentLocationMarker: MarkerOptions? = null
+    private var lastClickedMarker: Marker? = null
     private var poiDetailsSheet: PoiDetailsBottomSheet? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -90,6 +93,22 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
 
                     is MapStates.AddCurrentFakeLocationMarker -> {
                         addCurrentLocationMarker(it.location)
+                    }
+
+                    is MapStates.HideCurrentLocationFab -> {
+                        binding.currentLocationFAB.hide()
+                    }
+
+                    is MapStates.HidePoiDetails -> {
+                        poiDetailsSheet?.hide()
+                    }
+
+                    is MapStates.ShowCurrentLocationFab -> {
+                        binding.currentLocationFAB.show()
+                    }
+
+                    is MapStates.ResetHighlightedMarker -> {
+                        resetMarker(lastClickedMarker)
                     }
 
                     else -> {
@@ -117,6 +136,10 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
             }
         }
 
+        viewModel.selectedPoi.observe(viewLifecycleOwner) {
+            poiDetailsSheet?.showDetails(it)
+        }
+
         initViews()
     }
 
@@ -128,6 +151,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
     private fun addCurrentLocationMarker(location: LatLng) {
         val blueDotIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_bluedot)
         currentLocationMarker = MarkerOptions()
+            .title(CURRENT_FAKE_LOCATION_ID)
             .position(location)
             .icon(blueDotIcon)
 
@@ -140,6 +164,8 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
 
         _binding = null
         poiDetailsSheet = null
+        currentLocationMarker = null
+        lastClickedMarker = null
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -149,9 +175,24 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
     }
 
     override fun onMarkerClick(marker: Marker?): Boolean {
-        // TODO
-        return false
-    }
+        if (marker == null) {
+            return true
+        }
+
+        if (lastClickedMarker != marker) {
+            resetMarker(lastClickedMarker)
+        }
+
+        if (!marker.isMyCurrentLocation()) {
+            highlightMarker(marker)
+            lastClickedMarker = marker
+
+            sendEvent(MapEvents.OnMarkerClicked(marker.title))
+        } else {
+            highlightCurrentLocation(marker)
+
+            sendEvent(MapEvents.OnCurrentLocationMarkerClicked)
+        }
 
         return true
     }
@@ -180,9 +221,10 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
                 onClickListener = this@MapFragment
             }
 
+            routeDetails.onVisibilityChangedListener = onRouteDetailsVisibilityChangedListener
+
             currentLocationFAB.setOnClickListener {
                 // TODO
-                poiDetailsSheet?.show()
             }
 
             searchButton.setOnClickListener {
@@ -210,5 +252,19 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
         }
 
         return boundsBuilder.build()
+    }
+
+    private fun highlightCurrentLocation(marker: Marker) {
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.position,
+            MapZoomLevel.STREETS.level))
+    }
+
+    private fun highlightMarker(marker: Marker) {
+        map.animateCamera(CameraUpdateFactory.newLatLng(marker.position))
+        marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+    }
+
+    private fun resetMarker(marker: Marker?) {
+        marker?.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
     }
 }
