@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
+import androidx.core.view.isInvisible
+import androidx.core.view.isVisible
 import com.carto.androidtest.databinding.BottomSheetPoiDetailsBinding
 import com.carto.androidtest.domain.model.Poi
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -80,6 +82,29 @@ class PoiDetailsBottomSheet(bottomSheet: ConstraintLayout) {
         show()
     }
 
+    fun setDistance(distance: String?) {
+        with(binding) {
+            distance?.let {
+                distanceToPoi.text = distance
+            } ?: run {
+                distanceToPoi.text = " - Km"
+            }
+        }
+
+    }
+
+    fun setTime(time: String?) {
+        with(binding) {
+            time?.let {
+                timeToPoi.isVisible = true
+                timeToPoi.text = time
+            } ?: run {
+                timeToPoi.isInvisible = true
+            }
+        }
+
+    }
+
     private fun show() {
         bottomSheetBehaviour.state = BottomSheetBehavior.STATE_COLLAPSED
     }
@@ -97,8 +122,6 @@ class PoiDetailsBottomSheet(bottomSheet: ConstraintLayout) {
             poiTitle.text = poi.title
             poiDirectionIcon.setImageDrawable(ContextCompat.getDrawable(root.context,
                 poi.directionImage))
-//            distanceToPoi.text =
-//            timeToPoi.text =
             poiDescription.text = poi.description
         }
     }

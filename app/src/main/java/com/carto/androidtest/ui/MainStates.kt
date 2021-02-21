@@ -10,5 +10,6 @@ sealed class MainStates {
         object ShowCurrentLocationFab : MainStates()
         object HideCurrentLocationFab : MainStates()
         object ResetHighlightedMarker : MainStates()
+        object ShowDistanceToCurrentLocation : MainStates()
     }
 }

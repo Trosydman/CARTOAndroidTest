@@ -17,6 +17,9 @@ import com.carto.androidtest.ui.MainStates.MapStates
 import com.carto.androidtest.ui.MainViewModel
 import com.carto.androidtest.ui.custom.PoiDetailsBottomSheet
 import com.carto.androidtest.ui.custom.RouteDetailsView
+import com.carto.androidtest.utils.extensions.beautifyDistance
+import com.carto.androidtest.utils.extensions.beautifyTime
+import com.carto.androidtest.utils.extensions.distanceTo
 import com.carto.androidtest.utils.extensions.isMyCurrentLocation
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -109,6 +112,16 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
 
                     is MapStates.ResetHighlightedMarker -> {
                         resetMarker(lastClickedMarker)
+                    }
+
+                    is MapStates.ShowDistanceToCurrentLocation -> {
+                        val startingPosition = lastClickedMarker?.position ?: return@collect
+                        val endingPosition = currentLocationMarkerOptions?.position ?: return@collect
+                        val distance = startingPosition.distanceTo(endingPosition,
+                            requireContext())
+
+                        poiDetailsSheet?.setDistance(distance.beautifyDistance(requireContext()))
+                        poiDetailsSheet?.setTime(distance.beautifyTime(requireContext()))
                     }
 
                     else -> {
