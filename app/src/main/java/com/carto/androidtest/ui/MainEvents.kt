@@ -6,5 +6,6 @@ sealed class MainEvents {
         data class OnMarkerClicked(val relatedPoiId: String) : MainEvents()
         object OnCurrentLocationMarkerClicked: MainEvents()
         object OnPoiDetailsHide : MainEvents()
+        object OnCurrentLocationFabClicked : MainEvents()
     }
 }

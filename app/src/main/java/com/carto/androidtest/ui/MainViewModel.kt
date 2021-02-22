@@ -81,6 +81,11 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
 
                     is MapEvents.OnCurrentLocationMarkerClicked -> {
                         sendStateToUI(MapStates.HidePoiDetails)
+                        sendStateToUI(MapStates.HighlightCurrentLocation)
+                    }
+
+                    is MapEvents.OnCurrentLocationFabClicked -> {
+                        sendStateToUI(MapStates.HighlightCurrentLocation)
                     }
 
                     else -> {

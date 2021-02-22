@@ -76,7 +76,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
     private var _binding: FragmentMapBinding? = null
 
     private lateinit var map: GoogleMap
-    private var currentLocationMarker: MarkerOptions? = null
+    private var currentLocationMarkerOptions: MarkerOptions? = null
     private var lastClickedMarker: Marker? = null
     private var poiDetailsSheet: PoiDetailsBottomSheet? = null
 
@@ -124,6 +124,10 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
                         poiDetailsSheet?.setTime(distance.beautifyTime(requireContext()))
                     }
 
+                    is MapStates.HighlightCurrentLocation -> {
+                        highlightCurrentLocation(currentLocationMarkerOptions?.position)
+                    }
+
                     else -> {
                         if (BuildConfig.DEBUG) {
                             throw IllegalStateException("Unknown state: ${it::class.java.simpleName}")
@@ -163,12 +167,12 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
 
     private fun addCurrentLocationMarker(location: LatLng) {
         val blueDotIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_bluedot)
-        currentLocationMarker = MarkerOptions()
+        currentLocationMarkerOptions = MarkerOptions()
             .title(CURRENT_FAKE_LOCATION_ID)
             .position(location)
             .icon(blueDotIcon)
 
-        map.addMarker(currentLocationMarker)
+        map.addMarker(currentLocationMarkerOptions)
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, MapZoomLevel.CONTINENT.level))
     }
 
@@ -177,7 +181,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
 
         _binding = null
         poiDetailsSheet = null
-        currentLocationMarker = null
+        currentLocationMarkerOptions = null
         lastClickedMarker = null
     }
 
@@ -202,8 +206,6 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
 
             sendEvent(MapEvents.OnMarkerClicked(marker.title))
         } else {
-            highlightCurrentLocation(marker)
-
             sendEvent(MapEvents.OnCurrentLocationMarkerClicked)
         }
 
@@ -237,7 +239,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
             routeDetails.onVisibilityChangedListener = onRouteDetailsVisibilityChangedListener
 
             currentLocationFAB.setOnClickListener {
-                // TODO
+                sendEvent(MapEvents.OnCurrentLocationFabClicked)
             }
 
             searchButton.setOnClickListener {
@@ -267,9 +269,11 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
         return boundsBuilder.build()
     }
 
-    private fun highlightCurrentLocation(marker: Marker) {
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.position,
-            MapZoomLevel.STREETS.level))
+    private fun highlightCurrentLocation(location: LatLng? = currentLocationMarkerOptions?.position) {
+        if (location != null) {
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(location,
+                MapZoomLevel.STREETS.level))
+        }
     }
 
     private fun highlightMarker(marker: Marker) {
