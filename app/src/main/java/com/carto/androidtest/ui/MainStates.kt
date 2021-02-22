@@ -12,5 +12,6 @@ sealed class MainStates {
         object ResetHighlightedMarker : MainStates()
         object ShowDistanceToCurrentLocation : MainStates()
         object HighlightCurrentLocation : MainStates()
+        object HighlightSelectedMarker : MainStates()
     }
 }

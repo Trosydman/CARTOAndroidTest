@@ -71,6 +71,7 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
                             poi.id == it.relatedPoiId
                         }
                         sendStateToUI(MapStates.HideCurrentLocationFab)
+                        sendStateToUI(MapStates.HighlightSelectedMarker)
                         sendStateToUI(MapStates.ShowDistanceToCurrentLocation)
                     }
 

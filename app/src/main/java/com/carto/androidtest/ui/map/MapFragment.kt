@@ -128,6 +128,10 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
                         highlightCurrentLocation(currentLocationMarkerOptions?.position)
                     }
 
+                    is MapStates.HighlightSelectedMarker -> {
+                        lastClickedMarker?.let { marker ->  highlightMarker(marker) }
+                    }
+
                     else -> {
                         if (BuildConfig.DEBUG) {
                             throw IllegalStateException("Unknown state: ${it::class.java.simpleName}")
@@ -201,7 +205,6 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
         }
 
         if (!marker.isMyCurrentLocation()) {
-            highlightMarker(marker)
             lastClickedMarker = marker
 
             sendEvent(MapEvents.OnMarkerClicked(marker.title))
