@@ -69,17 +69,29 @@ class PoiDetailsBottomSheet(bottomSheet: ConstraintLayout) {
 
     fun isShown() = bottomSheetBehaviour.state != BottomSheetBehavior.STATE_HIDDEN
 
+    fun show() {
+        bottomSheetBehaviour.state = BottomSheetBehavior.STATE_COLLAPSED
+    }
+
     fun hide() {
         bottomSheetBehaviour.state = BottomSheetBehavior.STATE_HIDDEN
     }
 
-    fun showDetails(poi: Poi) {
-        if (currentPoiId != poi.id) {
-            currentPoiId = poi.id
-            fillDetails(poi)
-        }
+    fun fillDetails(poi: Poi) {
+        with(binding) {
+            Picasso.get()
+                .load(poi.image)
+                .fit()
+                .centerCrop()
+                .placeholder(android.R.drawable.ic_menu_camera)
+                .error(android.R.drawable.ic_delete)
+                .into(poiImage)
 
-        show()
+            poiTitle.text = poi.title
+            poiDirectionIcon.setImageDrawable(ContextCompat.getDrawable(root.context,
+                poi.directionImage))
+            poiDescription.text = poi.description
+        }
     }
 
     fun setDistance(distance: String?) {
@@ -103,26 +115,5 @@ class PoiDetailsBottomSheet(bottomSheet: ConstraintLayout) {
             }
         }
 
-    }
-
-    private fun show() {
-        bottomSheetBehaviour.state = BottomSheetBehavior.STATE_COLLAPSED
-    }
-
-    private fun fillDetails(poi: Poi) {
-        with(binding) {
-            Picasso.get()
-                .load(poi.image)
-                .fit()
-                .centerCrop()
-                .placeholder(android.R.drawable.ic_menu_camera)
-                .error(android.R.drawable.ic_delete)
-                .into(poiImage)
-
-            poiTitle.text = poi.title
-            poiDirectionIcon.setImageDrawable(ContextCompat.getDrawable(root.context,
-                poi.directionImage))
-            poiDescription.text = poi.description
-        }
     }
 }

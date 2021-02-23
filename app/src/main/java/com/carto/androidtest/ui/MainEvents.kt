@@ -7,5 +7,7 @@ sealed class MainEvents {
         object OnCurrentLocationMarkerClicked: MainEvents()
         object OnPoiDetailsHide : MainEvents()
         object OnCurrentLocationFabClicked : MainEvents()
+        object OnDirectionsFabClicked : MainEvents()
+        object OnRouteDetailsClosed : MainEvents()
     }
 }

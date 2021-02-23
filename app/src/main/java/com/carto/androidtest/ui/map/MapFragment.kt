@@ -1,5 +1,6 @@
 package com.carto.androidtest.ui.map
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
@@ -31,7 +32,11 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 const val MAP_MIN_ZOOM = 6.5f
+
+const val ROUTE_LINE_WIDTH = 5
+
 const val CAMERA_BOUNDS_PADDING = 60
+const val ROUTE_CAMERA_PADDING = 125
 
 @AndroidEntryPoint
 class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDetailsBottomSheet.OnClickListener,
@@ -79,6 +84,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
     private var currentLocationMarkerOptions: MarkerOptions? = null
     private var lastClickedMarker: Marker? = null
     private var poiDetailsSheet: PoiDetailsBottomSheet? = null
+    private var routeLine: Polyline? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -106,12 +112,22 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
                         poiDetailsSheet?.hide()
                     }
 
-                    is MapStates.ShowCurrentLocationFab -> {
+                    is MapStates.ShowFab -> {
+                        if (it.isPreparingRoute) {
+                            binding.currentLocationFAB.setImageResource(R.drawable.ic_gps_cursor)
+                        } else {
+                            binding.currentLocationFAB.setImageResource(R.drawable.ic_location)
+                        }
+
                         binding.currentLocationFAB.show()
                     }
 
                     is MapStates.ResetHighlightedMarker -> {
                         resetMarker(lastClickedMarker)
+                    }
+
+                    is MapStates.ShowPoiDetails -> {
+                        poiDetailsSheet?.show()
                     }
 
                     is MapStates.ShowDistanceToCurrentLocation -> {
@@ -129,7 +145,44 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
                     }
 
                     is MapStates.HighlightSelectedMarker -> {
-                        lastClickedMarker?.let { marker ->  highlightMarker(marker) }
+                        lastClickedMarker?.let {
+                                marker ->  highlightMarker(marker, it.animateCamera)
+                        }
+                    }
+
+                    is MapStates.ShowRouteDetails -> {
+                        with(binding.routeDetails) {
+                            isStartingFromCurrentLocation(it.isFromCurrentLocation)
+                            setAddressTo(viewModel.selectedPoi.value!!.title)
+                            show()
+                        }
+                    }
+
+                    is MapStates.CameraOnRoute -> {
+                        if (it.isFromCurrentLocation) {
+                            val boundsBuilder = LatLngBounds.Builder()
+                            boundsBuilder.include(currentLocationMarkerOptions?.position
+                                ?: return@collect)
+                            boundsBuilder.include(lastClickedMarker?.position ?: return@collect)
+
+                            map.animateCamera(CameraUpdateFactory.newLatLngBounds(
+                                boundsBuilder.build(), ROUTE_CAMERA_PADDING.toPx()))
+                        }
+                    }
+
+                    is MapStates.DrawRouteOnMap -> {
+                        if (it.isFromCurrentLocation ) {
+                            drawRoute(
+                                currentLocationMarkerOptions?.position ?: return@collect,
+                                lastClickedMarker?.position ?: return@collect
+                            )
+                        } else {
+                            // TODO
+                        }
+                    }
+
+                    is MapStates.ResetRoute -> {
+                        routeLine?.remove()
                     }
 
                     else -> {
@@ -158,7 +211,8 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
         }
 
         viewModel.selectedPoi.observe(viewLifecycleOwner) {
-            poiDetailsSheet?.showDetails(it)
+            poiDetailsSheet?.fillDetails(it)
+            binding.routeDetails.setAddressTo(it.title)
         }
 
         initViews()
@@ -216,11 +270,11 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
     }
 
     override fun onDirectionsFabClicked() {
-        // TODO
+        sendEvent(MapEvents.OnDirectionsFabClicked)
     }
 
     override fun onCloseButtonClicked() {
-        // TODO
+        sendEvent(MapEvents.OnRouteDetailsClosed)
     }
 
     private fun initMap() {
@@ -239,7 +293,10 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
                 onClickListener = this@MapFragment
             }
 
-            routeDetails.onVisibilityChangedListener = onRouteDetailsVisibilityChangedListener
+            with(routeDetails) {
+                onVisibilityChangedListener = onRouteDetailsVisibilityChangedListener
+                onClickListener = this@MapFragment
+            }
 
             currentLocationFAB.setOnClickListener {
                 sendEvent(MapEvents.OnCurrentLocationFabClicked)
@@ -279,12 +336,23 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
         }
     }
 
-    private fun highlightMarker(marker: Marker) {
-        map.animateCamera(CameraUpdateFactory.newLatLng(marker.position))
+    private fun highlightMarker(marker: Marker, animateCamera: Boolean = true) {
+        if (animateCamera) {
+            map.animateCamera(CameraUpdateFactory.newLatLng(marker.position))
+        }
         marker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
     }
 
     private fun resetMarker(marker: Marker?) {
         marker?.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+    }
+
+    private fun drawRoute(start: LatLng, end: LatLng) {
+        routeLine?.remove()
+        routeLine = map.addPolyline(PolylineOptions()
+            .add(start)
+            .add(end)
+            .color(Color.MAGENTA)
+            .width(ROUTE_LINE_WIDTH.toPx().toFloat()))
     }
 }
