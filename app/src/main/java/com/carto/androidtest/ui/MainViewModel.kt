@@ -50,8 +50,8 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
         }
     }.asLiveData()
 
-    private val _selectedPoi = MutableLiveData<Poi>()
-    val selectedPoi: LiveData<Poi>
+    private val _selectedPoi = MutableLiveData<Poi?>()
+    val selectedPoi: LiveData<Poi?>
         get() = _selectedPoi
 
     private var isPreparingRoute: Boolean = false
@@ -76,9 +76,7 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
                         if (isPreparingRoute) {
                             prepareRoute()
                         } else {
-                            sendStateToUI(MapStates.HideCurrentLocationFab)
-                            sendStateToUI(MapStates.ShowPoiDetails)
-                            sendStateToUI(MapStates.ShowDistanceToCurrentLocation)
+                            showPoiDetails()
                         }
 
                         sendStateToUI(MapStates.HighlightSelectedMarker(
@@ -111,11 +109,31 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
                     }
 
                     is MapEvents.OnRouteDetailsClosed -> {
-                        isPreparingRoute = false
+                        resetRoute()
 
-                        sendStateToUI(MapStates.ResetRoute)
-                        sendStateToUI(MapStates.ResetHighlightedMarker)
-                        sendStateToUI(MapStates.ShowFab(isPreparingRoute))
+                        showPoiDetails()
+                        sendStateToUI(MapStates.HighlightSelectedMarker())
+                    }
+
+                    is MapEvents.OnBackPressed -> {
+                        when {
+
+                            isPreparingRoute -> {
+                                resetRoute()
+
+                                showPoiDetails()
+                                sendStateToUI(MapStates.HighlightSelectedMarker())
+                            }
+
+                            selectedPoi.value != null -> {
+                                _selectedPoi.value = null
+                                sendStateToUI(MapStates.HidePoiDetails)
+                            }
+
+                            else -> {
+                                sendStateToUI(MapStates.FinishApp)
+                            }
+                        }
                     }
 
                     else -> {
@@ -128,12 +146,28 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
         }
     }
 
+    private suspend fun showPoiDetails() {
+        sendStateToUI(MapStates.HideCurrentLocationFab)
+        sendStateToUI(MapStates.ShowPoiDetails)
+        sendStateToUI(MapStates.ShowDistanceToCurrentLocation)
+    }
+
     private suspend fun prepareRoute() {
         isPreparingRoute = true
+
         sendStateToUI(MapStates.HidePoiDetails)
         sendStateToUI(MapStates.ShowRouteDetails())
         sendStateToUI(MapStates.CameraOnRoute())
         sendStateToUI(MapStates.DrawRouteOnMap())
+    }
+
+    private suspend fun resetRoute() {
+        isPreparingRoute = false
+
+        sendStateToUI(MapStates.CloseRouteDetails)
+        sendStateToUI(MapStates.ResetRoute)
+        sendStateToUI(MapStates.ResetHighlightedMarker)
+        sendStateToUI(MapStates.ShowFab(isPreparingRoute))
     }
 
     private suspend fun sendStateToUI(states: MainStates) = viewModelScope.launch {

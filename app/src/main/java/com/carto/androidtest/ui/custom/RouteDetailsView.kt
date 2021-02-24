@@ -44,7 +44,6 @@ class RouteDetailsView @JvmOverloads constructor(
 
             binding.closeButton.setOnClickListener {
                 onClickListener?.onCloseButtonClicked()
-                hide()
             }
         }
 

@@ -9,5 +9,6 @@ sealed class MainEvents {
         object OnCurrentLocationFabClicked : MainEvents()
         object OnDirectionsFabClicked : MainEvents()
         object OnRouteDetailsClosed : MainEvents()
+        object OnBackPressed : MainEvents()
     }
 }

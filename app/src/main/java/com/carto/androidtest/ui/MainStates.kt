@@ -15,8 +15,10 @@ sealed class MainStates {
         object HighlightCurrentLocation : MainStates()
         data class HighlightSelectedMarker(val animateCamera: Boolean = true) : MainStates()
         data class ShowRouteDetails(val isFromCurrentLocation: Boolean = true) : MainStates()
+        object CloseRouteDetails : MainStates()
         data class DrawRouteOnMap(val isFromCurrentLocation: Boolean = true) : MainStates()
         data class CameraOnRoute(val isFromCurrentLocation: Boolean = true) : MainStates()
         object ResetRoute : MainStates()
+        object FinishApp : MainStates()
     }
 }

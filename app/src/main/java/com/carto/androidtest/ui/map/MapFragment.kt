@@ -16,6 +16,7 @@ import com.carto.androidtest.ui.MainEvents
 import com.carto.androidtest.ui.MainEvents.MapEvents
 import com.carto.androidtest.ui.MainStates.MapStates
 import com.carto.androidtest.ui.MainViewModel
+import com.carto.androidtest.ui.NewMainActivity
 import com.carto.androidtest.ui.custom.PoiDetailsBottomSheet
 import com.carto.androidtest.ui.custom.RouteDetailsView
 import com.carto.androidtest.utils.extensions.beautifyDistance
@@ -39,8 +40,9 @@ const val CAMERA_BOUNDS_PADDING = 60
 const val ROUTE_CAMERA_PADDING = 125
 
 @AndroidEntryPoint
-class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDetailsBottomSheet.OnClickListener,
-    RouteDetailsView.OnClickListener, GoogleMap.OnMarkerClickListener {
+class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
+    PoiDetailsBottomSheet.OnClickListener, RouteDetailsView.OnClickListener,
+    GoogleMap.OnMarkerClickListener, NewMainActivity.OnBackPressedListener {
 
     enum class MapZoomLevel(val level: Float) {
         WORLD(1f),
@@ -158,6 +160,10 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
                         }
                     }
 
+                    is MapStates.CloseRouteDetails -> {
+                        binding.routeDetails.hide()
+                    }
+
                     is MapStates.CameraOnRoute -> {
                         if (it.isFromCurrentLocation) {
                             val boundsBuilder = LatLngBounds.Builder()
@@ -185,6 +191,10 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
                         routeLine?.remove()
                     }
 
+                    is MapStates.FinishApp -> {
+                        requireActivity().finish()
+                    }
+
                     else -> {
                         if (BuildConfig.DEBUG) {
                             throw IllegalStateException("Unknown state: ${it::class.java.simpleName}")
@@ -210,12 +220,29 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
             }
         }
 
-        viewModel.selectedPoi.observe(viewLifecycleOwner) {
-            poiDetailsSheet?.fillDetails(it)
-            binding.routeDetails.setAddressTo(it.title)
+        viewModel.selectedPoi.observe(viewLifecycleOwner) { poi ->
+            if (poi != null) {
+                poiDetailsSheet?.fillDetails(poi)
+                binding.routeDetails.setAddressTo(poi.title)
+            }
         }
 
         initViews()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+
+        _binding = null
+        poiDetailsSheet = null
+        currentLocationMarkerOptions = null
+        lastClickedMarker = null
+    }
+
+    override fun onBackPressed(): Boolean {
+        sendEvent(MapEvents.OnBackPressed)
+
+        return false
     }
 
     private fun applyInitialMapSetup() {
@@ -232,15 +259,6 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback, PoiDeta
 
         map.addMarker(currentLocationMarkerOptions)
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, MapZoomLevel.CONTINENT.level))
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-
-        _binding = null
-        poiDetailsSheet = null
-        currentLocationMarkerOptions = null
-        lastClickedMarker = null
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
