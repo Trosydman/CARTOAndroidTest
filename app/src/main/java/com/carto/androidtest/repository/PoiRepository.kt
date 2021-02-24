@@ -6,10 +6,7 @@ import com.carto.androidtest.domain.model.Poi
 import com.carto.androidtest.utils.Result
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 
 class PoiRepository(
     private val poiRemoteDataSource: RemoteDataSource,
@@ -17,7 +14,8 @@ class PoiRepository(
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) {
 
-    suspend fun getPois(): Flow<Result<List<Poi>>> = poiRemoteDataSource.getPois()
+    fun getPois(): Flow<Result<List<Poi>>> = poiRemoteDataSource.getPois()
+        .onStart { Result.Loading() }
         .map {
             val mappedList = poiDTOMapper.mapToDomainModelList(it)
 
