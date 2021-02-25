@@ -42,7 +42,7 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
                     // TODO as in Result.Error alternative
                 }
 
-                poisList
+                poisList.sortedBy { poi -> poi.title }
             }
             is Result.Error -> {
                 // TODO
