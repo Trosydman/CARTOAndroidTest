@@ -63,92 +63,117 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
             events.collect {
                 when (it) {
 
-                    is MapEvents.OnMapReady -> {
-                        sendStateToUI(MapStates.ApplyInitialMapSetup)
-                        sendStateToUI(MapStates.AddCurrentFakeLocationMarker(LatLng(
-                            CURRENT_FAKE_LOCATION_LAT, CURRENT_FAKE_LOCATION_LNG
-                        )))
-                    }
+                    is MapEvents -> {
+                        when (it) {
+                            is MapEvents.OnMapReady -> {
+                                sendStateToUI(MapStates.ApplyInitialMapSetup)
+                                sendStateToUI(MapStates.AddCurrentFakeLocationMarker(
+                                    LatLng(
+                                    CURRENT_FAKE_LOCATION_LAT, CURRENT_FAKE_LOCATION_LNG
+                                )
+                                ))
+                            }
 
-                    is MapEvents.OnMarkerClicked -> {
-                        _selectedPoi.value = pois.value?.first { poi ->
-                            poi.id == it.relatedPoiId
-                        }
+                            is MapEvents.OnMarkerClicked -> {
+                                _selectedPoi.value = pois.value?.first { poi ->
+                                    poi.id == it.relatedPoiId
+                                }
 
-                        if (isPreparingRoute) {
-                            prepareRoute()
-                        } else {
-                            showPoiDetails()
-                        }
+                                if (isPreparingRoute) {
+                                    prepareRoute()
+                                } else {
+                                    showPoiDetails()
+                                }
 
-                        sendStateToUI(MapStates.HighlightSelectedMarker(
-                            animateCamera = !isPreparingRoute)
-                        )
-                    }
+                                sendStateToUI(MapStates.HighlightSelectedMarker(
+                                    animateCamera = !isPreparingRoute)
+                                )
+                            }
 
-                    is MapEvents.OnPoiDetailsHide -> {
-                        sendStateToUI(MapStates.ShowFab(isPreparingRoute))
-                        if (isPreparingRoute.not()) {
-                            sendStateToUI(MapStates.ResetHighlightedMarker)
-                        }
-                    }
+                            is MapEvents.OnPoiDetailsHide -> {
+                                sendStateToUI(MapStates.ShowFab(isPreparingRoute))
+                                if (isPreparingRoute.not()) {
+                                    sendStateToUI(MapStates.ResetHighlightedMarker)
+                                }
+                            }
 
-                    is MapEvents.OnCurrentLocationMarkerClicked -> {
-                        if (isPreparingRoute.not()) {
-                            sendStateToUI(MapStates.HidePoiDetails)
-                            sendStateToUI(MapStates.HighlightCurrentLocation)
-                        }
-                    }
+                            is MapEvents.OnCurrentLocationMarkerClicked -> {
+                                if (isPreparingRoute.not()) {
+                                    sendStateToUI(MapStates.HidePoiDetails)
+                                    sendStateToUI(MapStates.HighlightCurrentLocation)
+                                }
+                            }
 
-                    is MapEvents.OnCurrentLocationFabClicked -> {
-                        if (isPreparingRoute.not()) {
-                            sendStateToUI(MapStates.HighlightCurrentLocation)
-                        }
-                    }
+                            is MapEvents.OnCurrentLocationFabClicked -> {
+                                if (isPreparingRoute.not()) {
+                                    sendStateToUI(MapStates.HighlightCurrentLocation)
+                                }
+                            }
 
-                    is MapEvents.OnDirectionsFabClicked -> {
-                        prepareRoute()
-                    }
+                            is MapEvents.OnDirectionsFabClicked -> {
+                                prepareRoute()
+                            }
 
-                    is MapEvents.OnRouteDetailsClosed -> {
-                        resetRoute()
-
-                        showPoiDetails()
-                        sendStateToUI(MapStates.HighlightSelectedMarker())
-                    }
-
-                    is MapEvents.OnBackPressed -> {
-                        when {
-
-                            isPreparingRoute -> {
+                            is MapEvents.OnRouteDetailsClosed -> {
                                 resetRoute()
 
                                 showPoiDetails()
                                 sendStateToUI(MapStates.HighlightSelectedMarker())
                             }
 
-                            selectedPoi.value != null -> {
-                                _selectedPoi.value = null
-                                sendStateToUI(MapStates.HidePoiDetails)
+                            is MapEvents.OnBackPressed -> {
+                                when {
+
+                                    isPreparingRoute -> {
+                                        resetRoute()
+
+                                        showPoiDetails()
+                                        sendStateToUI(MapStates.HighlightSelectedMarker())
+                                    }
+
+                                    selectedPoi.value != null -> {
+                                        _selectedPoi.value = null
+                                        sendStateToUI(MapStates.HidePoiDetails)
+                                    }
+
+                                    else -> {
+                                        sendStateToUI(MapStates.FinishApp)
+                                    }
+                                }
+                            }
+
+                            is MapEvents.OnSearchButtonClicked -> {
+                                sendStateToUI(MapStates.OpenPoiList)
                             }
 
                             else -> {
-                                sendStateToUI(MapStates.FinishApp)
+                                if (BuildConfig.DEBUG) {
+                                    throw IllegalStateException(
+                                        "Unknown MapEvents instance: ${it::class.java.simpleName}")
+                                }
                             }
                         }
                     }
 
-                    is MapEvents.OnSearchButtonClicked -> {
-                        sendStateToUI(MapStates.OpenPoiList)
-                    }
+                    is PoisListEvents -> {
+                        when (it) {
+                            is PoisListEvents.OnCloseButtonClicked -> {
+                                sendStateToUI(PoisListStates.PopBackStack)
+                            }
 
-                    is PoisListEvents.OnCloseButtonClicked -> {
-                        sendStateToUI(PoisListStates.PopBackStack)
+                            else -> {
+                                if (BuildConfig.DEBUG) {
+                                    throw IllegalStateException(
+                                        "Unknown PoisListEvents instance: ${it::class.java.simpleName}")
+                                }
+                            }
+                        }
                     }
 
                     else -> {
                         if (BuildConfig.DEBUG) {
-                            throw IllegalStateException("Unknown state: ${it::class.java.simpleName}")
+                            throw IllegalStateException(
+                                "Unknown MainEvents instance: ${it::class.java.simpleName}")
                         }
                     }
                 }

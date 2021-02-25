@@ -7,7 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.isVisible
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.carto.androidtest.BuildConfig
@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class PoisListDialogFragment : BottomSheetDialogFragment(), PoisListAdapter.OnPoiClickListener {
 
-    private val viewModel: MainViewModel by viewModels()
+    private val viewModel: MainViewModel by activityViewModels()
 
     private val binding: FragmentDialogPoisListBinding
         get() = _binding!!
@@ -76,6 +76,10 @@ class PoisListDialogFragment : BottomSheetDialogFragment(), PoisListAdapter.OnPo
 
         lifecycleScope.launchWhenStarted {
             viewModel.states.collect {
+                if (it !is PoisListStates) {
+                    return@collect
+                }
+
                 when (it) {
                     is PoisListStates.PopBackStack -> {
                         findNavController().popBackStack()
@@ -83,7 +87,8 @@ class PoisListDialogFragment : BottomSheetDialogFragment(), PoisListAdapter.OnPo
 
                     else -> {
                         if (BuildConfig.DEBUG) {
-                            throw IllegalStateException("Unknown state: ${it::class.java.simpleName}")
+                            throw IllegalStateException(
+                                "Unknown PoisListStates instance: ${it::class.java.simpleName}")
                         }
                     }
                 }

@@ -4,7 +4,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.carto.androidtest.BuildConfig
@@ -77,7 +77,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
 
         }
 
-    private val viewModel: MainViewModel by viewModels()
+    private val viewModel: MainViewModel by activityViewModels()
 
     private val binding: FragmentMapBinding
         get() = _binding!!
@@ -97,6 +97,10 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
         lifecycleScope.launchWhenStarted {
             initMap()
             viewModel.states.collect {
+                if (it !is MapStates) {
+                    return@collect
+                }
+
                 when (it) {
 
                     is MapStates.ApplyInitialMapSetup -> {
@@ -202,7 +206,8 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
 
                     else -> {
                         if (BuildConfig.DEBUG) {
-                            throw IllegalStateException("Unknown state: ${it::class.java.simpleName}")
+                            throw IllegalStateException(
+                                "Unknown MapStates instance: ${it::class.java.simpleName}")
                         }
                     }
                 }
