@@ -25,7 +25,34 @@ class PoisListDialogFragment : BottomSheetDialogFragment() {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return super.onCreateDialog(savedInstanceState)
+        val bottomSheetDialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
+
+        bottomSheetDialog.setOnShowListener { dialog ->
+            val bottomSheet = (dialog as BottomSheetDialog).findViewById<View>(R.id.design_bottom_sheet) as FrameLayout
+            val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
+
+            bottomSheetBehavior.addBottomSheetCallback(object: BottomSheetBehavior.BottomSheetCallback() {
+                override fun onSlide(bottomSheet: View, slideOffset: Float) {
+                    // This allows to show the close button ONLY at the half of the sliding
+                    binding.closeButton.visibility = if (slideOffset > 0.5) {
+                        View.VISIBLE
+                    } else {
+                        View.INVISIBLE
+                    }
+                }
+
+                override fun onStateChanged(bottomSheet: View, newState: Int) {
+                    when (newState) {
+                        BottomSheetBehavior.STATE_HIDDEN-> dismiss()
+                        else -> {
+                            // Do nothing
+                        }
+                    }
+                }
+            })
+        }
+
+        return bottomSheetDialog
     }
 
     override fun onCreateView(
