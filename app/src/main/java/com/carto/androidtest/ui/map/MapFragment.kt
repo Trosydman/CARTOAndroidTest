@@ -6,6 +6,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.carto.androidtest.BuildConfig
 import com.carto.androidtest.R
 import com.carto.androidtest.databinding.FragmentMapBinding
@@ -195,6 +196,10 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
                         requireActivity().finish()
                     }
 
+                    is MapStates.OpenPoiList -> {
+                        findNavController().navigate(R.id.to_poisBottomSheetDialogFragment)
+                    }
+
                     else -> {
                         if (BuildConfig.DEBUG) {
                             throw IllegalStateException("Unknown state: ${it::class.java.simpleName}")
@@ -321,7 +326,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
             }
 
             searchButton.setOnClickListener {
-                // TODO
+                sendEvent(MapEvents.OnSearchButtonClicked)
             }
 
             helpButton.setOnClickListener {

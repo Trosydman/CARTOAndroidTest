@@ -136,6 +136,10 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
                         }
                     }
 
+                    is MapEvents.OnSearchButtonClicked -> {
+                        sendStateToUI(MapStates.OpenPoiList)
+                    }
+
                     else -> {
                         if (BuildConfig.DEBUG) {
                             throw IllegalStateException("Unknown state: ${it::class.java.simpleName}")

@@ -20,5 +20,6 @@ sealed class MainStates {
         data class CameraOnRoute(val isFromCurrentLocation: Boolean = true) : MainStates()
         object ResetRoute : MainStates()
         object FinishApp : MainStates()
+        object OpenPoiList : MainStates()
     }
 }
