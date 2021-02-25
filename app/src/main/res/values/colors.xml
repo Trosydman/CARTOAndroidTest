@@ -19,4 +19,6 @@
     <color name="search_white">#E0FFFFFF</color>
     <color name="carto">#EF4646</color>
     <color name="splash">@color/carto</color>
+
+    <color name="transparent">#00FFFFFF</color>
 </resources>
