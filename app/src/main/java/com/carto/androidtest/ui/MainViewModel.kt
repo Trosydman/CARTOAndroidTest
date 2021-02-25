@@ -5,7 +5,9 @@ import com.carto.androidtest.BuildConfig
 import com.carto.androidtest.domain.model.Poi
 import com.carto.androidtest.repository.PoiRepository
 import com.carto.androidtest.ui.MainEvents.MapEvents
+import com.carto.androidtest.ui.MainEvents.PoisListEvents
 import com.carto.androidtest.ui.MainStates.MapStates
+import com.carto.androidtest.ui.MainStates.PoisListStates
 import com.carto.androidtest.utils.Result
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -138,6 +140,10 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
 
                     is MapEvents.OnSearchButtonClicked -> {
                         sendStateToUI(MapStates.OpenPoiList)
+                    }
+
+                    is PoisListEvents.OnCloseButtonClicked -> {
+                        sendStateToUI(PoisListStates.PopBackStack)
                     }
 
                     else -> {

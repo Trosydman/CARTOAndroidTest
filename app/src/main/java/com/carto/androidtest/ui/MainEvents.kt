@@ -12,4 +12,8 @@ sealed class MainEvents {
         object OnBackPressed : MainEvents()
         object OnSearchButtonClicked : MainEvents()
     }
+
+    sealed class PoisListEvents: MainEvents() {
+        object OnCloseButtonClicked : PoisListEvents()
+    }
 }

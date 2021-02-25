@@ -8,15 +8,23 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import com.carto.androidtest.BuildConfig
 import com.carto.androidtest.R
 import com.carto.androidtest.databinding.FragmentDialogPoisListBinding
 import com.carto.androidtest.domain.model.Poi
+import com.carto.androidtest.ui.MainEvents
+import com.carto.androidtest.ui.MainEvents.PoisListEvents
+import com.carto.androidtest.ui.MainStates.PoisListStates
 import com.carto.androidtest.ui.MainViewModel
 import com.carto.androidtest.ui.pois.adapter.PoisListAdapter
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class PoisListDialogFragment : BottomSheetDialogFragment(), PoisListAdapter.OnPoiClickListener {
@@ -66,6 +74,22 @@ class PoisListDialogFragment : BottomSheetDialogFragment(), PoisListAdapter.OnPo
     ): View {
         _binding = FragmentDialogPoisListBinding.inflate(inflater, container, false)
 
+        lifecycleScope.launchWhenStarted {
+            viewModel.states.collect {
+                when (it) {
+                    is PoisListStates.PopBackStack -> {
+                        findNavController().popBackStack()
+                    }
+
+                    else -> {
+                        if (BuildConfig.DEBUG) {
+                            throw IllegalStateException("Unknown state: ${it::class.java.simpleName}")
+                        }
+                    }
+                }
+            }
+        }
+
         initViews()
 
         viewModel.pois.observe(viewLifecycleOwner) {
@@ -88,6 +112,16 @@ class PoisListDialogFragment : BottomSheetDialogFragment(), PoisListAdapter.OnPo
 
     private fun initViews() {
         poisListAdapter = PoisListAdapter(this)
-        binding.poisList.adapter = poisListAdapter
+
+        with(binding) {
+            poisList.adapter = poisListAdapter
+            closeButton.setOnClickListener {
+                sendEvent(PoisListEvents.OnCloseButtonClicked)
+            }
+        }
+    }
+
+    private fun sendEvent(event: MainEvents) = lifecycleScope.launch {
+        viewModel.eventsChannel.send(event)
     }
 }

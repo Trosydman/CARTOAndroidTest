@@ -22,4 +22,8 @@ sealed class MainStates {
         object FinishApp : MainStates()
         object OpenPoiList : MainStates()
     }
+
+    sealed class PoisListStates: MainStates() {
+        object PopBackStack: PoisListStates()
+    }
 }
