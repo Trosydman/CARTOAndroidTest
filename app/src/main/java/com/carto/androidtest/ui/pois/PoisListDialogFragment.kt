@@ -5,14 +5,21 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
+import com.carto.androidtest.R
 import com.carto.androidtest.databinding.FragmentDialogPoisListBinding
+import com.carto.androidtest.domain.model.Poi
 import com.carto.androidtest.ui.MainViewModel
+import com.carto.androidtest.ui.pois.adapter.PoisListAdapter
+import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class PoisListDialogFragment : BottomSheetDialogFragment() {
+class PoisListDialogFragment : BottomSheetDialogFragment(), PoisListAdapter.OnPoiClickListener {
 
     private val viewModel: MainViewModel by viewModels()
 
@@ -20,9 +27,7 @@ class PoisListDialogFragment : BottomSheetDialogFragment() {
         get() = _binding!!
     private var _binding: FragmentDialogPoisListBinding? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-    }
+    private lateinit var poisListAdapter: PoisListAdapter
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val bottomSheetDialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
@@ -61,6 +66,13 @@ class PoisListDialogFragment : BottomSheetDialogFragment() {
     ): View {
         _binding = FragmentDialogPoisListBinding.inflate(inflater, container, false)
 
+        initViews()
+
+        viewModel.pois.observe(viewLifecycleOwner) {
+            binding.loadingProgressBar.isVisible = false
+            poisListAdapter.submitList(it.toMutableList())
+        }
+
         return binding.root
     }
 
@@ -68,5 +80,14 @@ class PoisListDialogFragment : BottomSheetDialogFragment() {
         super.onDestroyView()
 
         _binding = null
+    }
+
+    override fun onItemRootClickListener(poi: Poi) {
+        // TODO
+    }
+
+    private fun initViews() {
+        poisListAdapter = PoisListAdapter(this)
+        binding.poisList.adapter = poisListAdapter
     }
 }
