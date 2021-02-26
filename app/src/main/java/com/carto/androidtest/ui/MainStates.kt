@@ -21,6 +21,7 @@ sealed class MainStates {
         object ResetRoute : MapStates()
         object FinishApp : MapStates()
         object OpenPoiList : MapStates()
+        data class HighlightPoiMarker(val poiId: String) : MapStates()
     }
 
     sealed class PoisListStates: MainStates() {

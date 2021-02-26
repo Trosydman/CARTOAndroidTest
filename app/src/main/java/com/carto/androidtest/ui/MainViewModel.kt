@@ -161,6 +161,13 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
                                 sendStateToUI(PoisListStates.PopBackStack)
                             }
 
+                            is PoisListEvents.OnPoiItemClicked -> {
+                                val poiId = it.poi.id
+
+                                sendStateToUI(MapStates.HighlightPoiMarker(poiId))
+                                sendStateToUI(PoisListStates.PopBackStack)
+                            }
+
                             else -> {
                                 if (BuildConfig.DEBUG) {
                                     throw IllegalStateException(
@@ -183,8 +190,8 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
 
     private suspend fun showPoiDetails() {
         sendStateToUI(MapStates.HideCurrentLocationFab)
-        sendStateToUI(MapStates.ShowPoiDetails)
         sendStateToUI(MapStates.ShowDistanceToCurrentLocation)
+        sendStateToUI(MapStates.ShowPoiDetails)
     }
 
     private suspend fun prepareRoute() {

@@ -112,7 +112,7 @@ class PoisListDialogFragment : BottomSheetDialogFragment(), PoisListAdapter.OnPo
     }
 
     override fun onItemRootClickListener(poi: Poi) {
-        // TODO
+        sendEvent(PoisListEvents.OnPoiItemClicked(poi))
     }
 
     private fun initViews() {

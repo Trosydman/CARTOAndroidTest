@@ -85,7 +85,9 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
 
     private lateinit var map: GoogleMap
     private var currentLocationMarkerOptions: MarkerOptions? = null
+    private var poiIdsMarkers = mutableMapOf<String, Marker>()
     private var lastClickedMarker: Marker? = null
+
     private var poiDetailsSheet: PoiDetailsBottomSheet? = null
     private var routeLine: Polyline? = null
 
@@ -202,6 +204,12 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
 
                     is MapStates.OpenPoiList -> {
                         findNavController().navigate(R.id.to_poisBottomSheetDialogFragment)
+                    }
+
+                    is MapStates.HighlightPoiMarker -> {
+                        resetMarker(lastClickedMarker)
+                        lastClickedMarker = poiIdsMarkers[it.poiId]
+                        sendEvent(MapEvents.OnMarkerClicked(it.poiId))
                     }
 
                     else -> {
@@ -346,11 +354,13 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
         pois.forEach { poi ->
             val latLng = LatLng(poi.latitude, poi.longitude)
             val markerTitle = poi.id
-            val newMarker = MarkerOptions()
+            val newMarkerOptions = MarkerOptions()
                 .title(markerTitle)
                 .position(latLng)
 
-            map.addMarker(newMarker)
+            val newMarker = map.addMarker(newMarkerOptions)
+            poiIdsMarkers[poi.id] = newMarker
+
             boundsBuilder.include(latLng)
         }
 

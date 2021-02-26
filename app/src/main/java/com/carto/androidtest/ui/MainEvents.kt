@@ -1,5 +1,7 @@
 package com.carto.androidtest.ui
 
+import com.carto.androidtest.domain.model.Poi
+
 sealed class MainEvents {
     sealed class MapEvents: MainEvents() {
         object OnMapReady: MapEvents()
@@ -15,5 +17,6 @@ sealed class MainEvents {
 
     sealed class PoisListEvents: MainEvents() {
         object OnCloseButtonClicked : PoisListEvents()
+        data class OnPoiItemClicked(val poi: Poi) : PoisListEvents()
     }
 }
