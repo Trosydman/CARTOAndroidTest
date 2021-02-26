@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 
@@ -84,6 +85,8 @@ class MainViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             events.collect {
+                Timber.i("Event triggered => ${it::class.java.name}")
+
                 when (it) {
 
                     is MapEvents -> {

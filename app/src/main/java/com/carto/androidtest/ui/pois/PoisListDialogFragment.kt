@@ -26,6 +26,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class PoisListDialogFragment : BottomSheetDialogFragment(), PoisListAdapter.OnPoiClickListener {
@@ -75,8 +76,10 @@ class PoisListDialogFragment : BottomSheetDialogFragment(), PoisListAdapter.OnPo
     ): View {
         _binding = FragmentDialogPoisListBinding.inflate(inflater, container, false)
 
-        lifecycleScope.launchWhenStarted {
+        lifecycleScope.launchWhenResumed {
             viewModel.states.collect {
+                Timber.i("State received => ${it::class.java.name}")
+
                 if (it !is PoisListStates) {
                     return@collect
                 }

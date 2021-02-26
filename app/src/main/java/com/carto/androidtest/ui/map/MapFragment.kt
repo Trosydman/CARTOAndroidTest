@@ -32,6 +32,7 @@ import com.google.android.gms.maps.model.*
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 const val MAP_MIN_ZOOM = 6.5f
 
@@ -96,9 +97,12 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
 
         _binding = FragmentMapBinding.bind(view)
 
-        lifecycleScope.launchWhenStarted {
-            initMap()
+        initMap()
+
+        lifecycleScope.launchWhenResumed {
             viewModel.states.collect {
+                Timber.i("State received => ${it::class.java.name}")
+
                 if (it !is MapStates) {
                     return@collect
                 }
