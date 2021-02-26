@@ -13,6 +13,7 @@ import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -24,7 +25,10 @@ const val CURRENT_FAKE_LOCATION_LAT = -33.3000802
 const val CURRENT_FAKE_LOCATION_LNG = 149.0913524
 
 @HiltViewModel
-class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel() {
+class MainViewModel @Inject constructor(
+    repository: PoiRepository,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     val eventsChannel = Channel<MainEvents>()
     private val events = eventsChannel.receiveAsFlow()
@@ -32,7 +36,9 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
     private val statesChannel = Channel<MainStates>()
     val states = statesChannel.receiveAsFlow()
 
-    val pois = repository.getPois().map {
+    val searchQuery = savedStateHandle.getLiveData("searchQuery", "")
+
+    private val poisFlow = repository.getPois().map {
         when(it) {
             is Result.Loading -> TODO()
             is Result.Success -> {
@@ -49,6 +55,23 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
 
                 emptyList()
             }
+        }
+    }
+    val pois = poisFlow.asLiveData()
+
+    val searchedPois = combine(
+        poisFlow,
+        searchQuery.asFlow()
+    ) { pois, searchQuery ->
+        if (searchQuery!= null && searchQuery.isNotEmpty()) {
+            pois.filter {
+                it.title.contains(
+                    searchQuery,
+                    ignoreCase = true
+                )
+            }
+        } else {
+            pois
         }
     }.asLiveData()
 
@@ -163,15 +186,22 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
 
                             is PoisListEvents.OnPoiItemClicked -> {
                                 val poiId = it.poi.id
+                                searchQuery.value = ""
 
                                 sendStateToUI(MapStates.HighlightPoiMarker(poiId))
                                 sendStateToUI(PoisListStates.PopBackStack)
                             }
 
+                            is PoisListEvents.OnSearchFieldTextChanged -> {
+                                searchQuery.value = it.query
+                            }
+
                             else -> {
                                 if (BuildConfig.DEBUG) {
                                     throw IllegalStateException(
-                                        "Unknown PoisListEvents instance: ${it::class.java.simpleName}")
+                                        "Unknown PoisListEvents instance: "
+                                                + it::class.java.simpleName
+                                    )
                                 }
                             }
                         }

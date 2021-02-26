@@ -18,5 +18,6 @@ sealed class MainEvents {
     sealed class PoisListEvents: MainEvents() {
         object OnCloseButtonClicked : PoisListEvents()
         data class OnPoiItemClicked(val poi: Poi) : PoisListEvents()
+        data class OnSearchFieldTextChanged(val query: String) : PoisListEvents()
     }
 }

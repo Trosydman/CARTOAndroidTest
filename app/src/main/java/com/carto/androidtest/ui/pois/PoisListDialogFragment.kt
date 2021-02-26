@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.core.view.isVisible
+import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -97,7 +98,7 @@ class PoisListDialogFragment : BottomSheetDialogFragment(), PoisListAdapter.OnPo
 
         initViews()
 
-        viewModel.pois.observe(viewLifecycleOwner) {
+        viewModel.searchedPois.observe(viewLifecycleOwner) {
             binding.loadingProgressBar.isVisible = false
             poisListAdapter.submitList(it.toMutableList())
         }
@@ -120,8 +121,18 @@ class PoisListDialogFragment : BottomSheetDialogFragment(), PoisListAdapter.OnPo
 
         with(binding) {
             poisList.adapter = poisListAdapter
+
             closeButton.setOnClickListener {
                 sendEvent(PoisListEvents.OnCloseButtonClicked)
+            }
+
+            searchTextInput.editText?.doOnTextChanged { inputText, _, _, _ ->
+                sendEvent(PoisListEvents.OnSearchFieldTextChanged(inputText.toString()))
+            }
+
+            val pendingQuery = viewModel.searchQuery.value
+            if (pendingQuery != null && pendingQuery.isNotEmpty()) {
+                binding.searchTextInput.editText?.setText(pendingQuery)
             }
         }
     }
