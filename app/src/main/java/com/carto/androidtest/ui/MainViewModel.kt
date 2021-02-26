@@ -5,12 +5,15 @@ import com.carto.androidtest.BuildConfig
 import com.carto.androidtest.domain.model.Poi
 import com.carto.androidtest.repository.PoiRepository
 import com.carto.androidtest.ui.MainEvents.MapEvents
+import com.carto.androidtest.ui.MainEvents.PoisListEvents
 import com.carto.androidtest.ui.MainStates.MapStates
+import com.carto.androidtest.ui.MainStates.PoisListStates
 import com.carto.androidtest.utils.Result
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -22,7 +25,10 @@ const val CURRENT_FAKE_LOCATION_LAT = -33.3000802
 const val CURRENT_FAKE_LOCATION_LNG = 149.0913524
 
 @HiltViewModel
-class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel() {
+class MainViewModel @Inject constructor(
+    repository: PoiRepository,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     val eventsChannel = Channel<MainEvents>()
     private val events = eventsChannel.receiveAsFlow()
@@ -30,7 +36,9 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
     private val statesChannel = Channel<MainStates>()
     val states = statesChannel.receiveAsFlow()
 
-    val pois = repository.getPois().map {
+    val searchQuery = savedStateHandle.getLiveData("searchQuery", "")
+
+    private val poisFlow = repository.getPois().map {
         when(it) {
             is Result.Loading -> TODO()
             is Result.Success -> {
@@ -40,13 +48,30 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
                     // TODO as in Result.Error alternative
                 }
 
-                poisList
+                poisList.sortedBy { poi -> poi.title }
             }
             is Result.Error -> {
                 // TODO
 
                 emptyList()
             }
+        }
+    }
+    val pois = poisFlow.asLiveData()
+
+    val searchedPois = combine(
+        poisFlow,
+        searchQuery.asFlow()
+    ) { pois, searchQuery ->
+        if (searchQuery!= null && searchQuery.isNotEmpty()) {
+            pois.filter {
+                it.title.contains(
+                    searchQuery,
+                    ignoreCase = true
+                )
+            }
+        } else {
+            pois
         }
     }.asLiveData()
 
@@ -61,84 +86,131 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
             events.collect {
                 when (it) {
 
-                    is MapEvents.OnMapReady -> {
-                        sendStateToUI(MapStates.ApplyInitialMapSetup)
-                        sendStateToUI(MapStates.AddCurrentFakeLocationMarker(LatLng(
-                            CURRENT_FAKE_LOCATION_LAT, CURRENT_FAKE_LOCATION_LNG
-                        )))
-                    }
+                    is MapEvents -> {
+                        when (it) {
+                            is MapEvents.OnMapReady -> {
+                                sendStateToUI(MapStates.ApplyInitialMapSetup)
+                                sendStateToUI(MapStates.AddCurrentFakeLocationMarker(
+                                    LatLng(
+                                    CURRENT_FAKE_LOCATION_LAT, CURRENT_FAKE_LOCATION_LNG
+                                )
+                                ))
+                            }
 
-                    is MapEvents.OnMarkerClicked -> {
-                        _selectedPoi.value = pois.value?.first { poi ->
-                            poi.id == it.relatedPoiId
-                        }
+                            is MapEvents.OnMarkerClicked -> {
+                                _selectedPoi.value = pois.value?.first { poi ->
+                                    poi.id == it.relatedPoiId
+                                }
 
-                        if (isPreparingRoute) {
-                            prepareRoute()
-                        } else {
-                            showPoiDetails()
-                        }
+                                if (isPreparingRoute) {
+                                    prepareRoute()
+                                } else {
+                                    showPoiDetails()
+                                }
 
-                        sendStateToUI(MapStates.HighlightSelectedMarker(
-                            animateCamera = !isPreparingRoute)
-                        )
-                    }
+                                sendStateToUI(MapStates.HighlightSelectedMarker(
+                                    animateCamera = !isPreparingRoute)
+                                )
+                            }
 
-                    is MapEvents.OnPoiDetailsHide -> {
-                        sendStateToUI(MapStates.ShowFab(isPreparingRoute))
-                        if (isPreparingRoute.not()) {
-                            sendStateToUI(MapStates.ResetHighlightedMarker)
-                        }
-                    }
+                            is MapEvents.OnPoiDetailsHide -> {
+                                sendStateToUI(MapStates.ShowFab(isPreparingRoute))
+                                if (isPreparingRoute.not()) {
+                                    sendStateToUI(MapStates.ResetHighlightedMarker)
+                                }
+                            }
 
-                    is MapEvents.OnCurrentLocationMarkerClicked -> {
-                        if (isPreparingRoute.not()) {
-                            sendStateToUI(MapStates.HidePoiDetails)
-                            sendStateToUI(MapStates.HighlightCurrentLocation)
-                        }
-                    }
+                            is MapEvents.OnCurrentLocationMarkerClicked -> {
+                                if (isPreparingRoute.not()) {
+                                    sendStateToUI(MapStates.HidePoiDetails)
+                                    sendStateToUI(MapStates.HighlightCurrentLocation)
+                                }
+                            }
 
-                    is MapEvents.OnCurrentLocationFabClicked -> {
-                        if (isPreparingRoute.not()) {
-                            sendStateToUI(MapStates.HighlightCurrentLocation)
-                        }
-                    }
+                            is MapEvents.OnCurrentLocationFabClicked -> {
+                                if (isPreparingRoute.not()) {
+                                    sendStateToUI(MapStates.HighlightCurrentLocation)
+                                }
+                            }
 
-                    is MapEvents.OnDirectionsFabClicked -> {
-                        prepareRoute()
-                    }
+                            is MapEvents.OnDirectionsFabClicked -> {
+                                prepareRoute()
+                            }
 
-                    is MapEvents.OnRouteDetailsClosed -> {
-                        resetRoute()
-
-                        showPoiDetails()
-                        sendStateToUI(MapStates.HighlightSelectedMarker())
-                    }
-
-                    is MapEvents.OnBackPressed -> {
-                        when {
-
-                            isPreparingRoute -> {
+                            is MapEvents.OnRouteDetailsClosed -> {
                                 resetRoute()
 
                                 showPoiDetails()
                                 sendStateToUI(MapStates.HighlightSelectedMarker())
                             }
 
-                            selectedPoi.value != null -> {
-                                _selectedPoi.value = null
-                                sendStateToUI(MapStates.HidePoiDetails)
+                            is MapEvents.OnBackPressed -> {
+                                when {
+
+                                    isPreparingRoute -> {
+                                        resetRoute()
+
+                                        showPoiDetails()
+                                        sendStateToUI(MapStates.HighlightSelectedMarker())
+                                    }
+
+                                    selectedPoi.value != null -> {
+                                        _selectedPoi.value = null
+                                        sendStateToUI(MapStates.HidePoiDetails)
+                                    }
+
+                                    else -> {
+                                        sendStateToUI(MapStates.FinishApp)
+                                    }
+                                }
+                            }
+
+                            is MapEvents.OnSearchButtonClicked -> {
+                                sendStateToUI(MapStates.OpenPoiList)
                             }
 
                             else -> {
-                                sendStateToUI(MapStates.FinishApp)
+                                if (BuildConfig.DEBUG) {
+                                    throw IllegalStateException(
+                                        "Unknown MapEvents instance: ${it::class.java.simpleName}")
+                                }
+                            }
+                        }
+                    }
+
+                    is PoisListEvents -> {
+                        when (it) {
+                            is PoisListEvents.OnCloseButtonClicked -> {
+                                sendStateToUI(PoisListStates.PopBackStack)
+                            }
+
+                            is PoisListEvents.OnPoiItemClicked -> {
+                                val poiId = it.poi.id
+                                searchQuery.value = ""
+
+                                sendStateToUI(MapStates.HighlightPoiMarker(poiId))
+                                sendStateToUI(PoisListStates.PopBackStack)
+                            }
+
+                            is PoisListEvents.OnSearchFieldTextChanged -> {
+                                searchQuery.value = it.query
+                            }
+
+                            else -> {
+                                if (BuildConfig.DEBUG) {
+                                    throw IllegalStateException(
+                                        "Unknown PoisListEvents instance: "
+                                                + it::class.java.simpleName
+                                    )
+                                }
                             }
                         }
                     }
 
                     else -> {
                         if (BuildConfig.DEBUG) {
-                            throw IllegalStateException("Unknown state: ${it::class.java.simpleName}")
+                            throw IllegalStateException(
+                                "Unknown MainEvents instance: ${it::class.java.simpleName}")
                         }
                     }
                 }
@@ -148,8 +220,8 @@ class MainViewModel @Inject constructor(repository: PoiRepository) : ViewModel()
 
     private suspend fun showPoiDetails() {
         sendStateToUI(MapStates.HideCurrentLocationFab)
-        sendStateToUI(MapStates.ShowPoiDetails)
         sendStateToUI(MapStates.ShowDistanceToCurrentLocation)
+        sendStateToUI(MapStates.ShowPoiDetails)
     }
 
     private suspend fun prepareRoute() {
