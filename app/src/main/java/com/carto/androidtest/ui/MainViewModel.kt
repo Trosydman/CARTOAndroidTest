@@ -8,6 +8,8 @@ import com.carto.androidtest.ui.MainEvents.MapEvents
 import com.carto.androidtest.ui.MainEvents.PoisListEvents
 import com.carto.androidtest.ui.MainStates.MapStates
 import com.carto.androidtest.ui.MainStates.PoisListStates
+import com.carto.androidtest.utils.LocationStatus
+import com.carto.androidtest.utils.LocationStatusLiveData
 import com.carto.androidtest.utils.Result
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -73,8 +75,17 @@ class MainViewModel @Inject constructor(
         }
     }.asLiveData()
 
+    lateinit var locationStatusLiveData: LocationStatusLiveData
+
     private val _selectedPoi = MutableLiveData<Poi?>()
     val selectedPoi: LiveData<Poi?>
+        get() = _selectedPoi
+
+    private val _originPoi = MutableLiveData<Poi?>()
+    val originPoi: LiveData<Poi?>
+        get() = _originPoi
+
+    val destinationPoi: LiveData<Poi?>
         get() = _selectedPoi
 
     private var isPreparingRoute: Boolean = false
@@ -90,26 +101,44 @@ class MainViewModel @Inject constructor(
                         when (it) {
                             is MapEvents.OnMapReady -> {
                                 sendStateToUI(MapStates.ApplyInitialMapSetup)
-                                sendStateToUI(MapStates.AddCurrentFakeLocationMarker(
-                                    LatLng(
-                                    CURRENT_FAKE_LOCATION_LAT, CURRENT_FAKE_LOCATION_LNG
+                                sendStateToUI(
+                                    MapStates.AddCurrentFakeLocationMarker(
+                                        LatLng(
+                                            CURRENT_FAKE_LOCATION_LAT,
+                                            CURRENT_FAKE_LOCATION_LNG
+                                        )
+                                    )
                                 )
-                                ))
                             }
 
                             is MapEvents.OnMarkerClicked -> {
-                                _selectedPoi.value = pois.value?.first { poi ->
-                                    poi.id == it.relatedPoiId
-                                }
+                                val isLocationEnabled =
+                                    locationStatusLiveData.value?.isLocationEnabled ?: false
 
                                 if (isPreparingRoute) {
+                                    if (!isLocationEnabled) {
+                                        _originPoi.value = pois.value?.first { poi ->
+                                            poi.id == it.relatedPoiId
+                                        }
+                                    } else {
+                                        _selectedPoi.value = pois.value?.first { poi ->
+                                            poi.id == it.relatedPoiId
+                                        }
+                                    }
+
                                     prepareRoute()
                                 } else {
+                                    _selectedPoi.value = pois.value?.first { poi ->
+                                        poi.id == it.relatedPoiId
+                                    }
+
                                     showPoiDetails()
                                 }
 
-                                sendStateToUI(MapStates.HighlightSelectedMarker(
-                                    animateCamera = !isPreparingRoute)
+                                sendStateToUI(
+                                    MapStates.HighlightSelectedMarker(
+                                        animateCamera = !isPreparingRoute
+                                    )
                                 )
                             }
 
@@ -138,20 +167,14 @@ class MainViewModel @Inject constructor(
                             }
 
                             is MapEvents.OnRouteDetailsClosed -> {
-                                resetRoute()
-
-                                showPoiDetails()
-                                sendStateToUI(MapStates.HighlightSelectedMarker())
+                                closeRouteDetails()
                             }
 
                             is MapEvents.OnBackPressed -> {
                                 when {
 
                                     isPreparingRoute -> {
-                                        resetRoute()
-
-                                        showPoiDetails()
-                                        sendStateToUI(MapStates.HighlightSelectedMarker())
+                                        closeRouteDetails()
                                     }
 
                                     selectedPoi.value != null -> {
@@ -172,7 +195,8 @@ class MainViewModel @Inject constructor(
                             else -> {
                                 if (BuildConfig.DEBUG) {
                                     throw IllegalStateException(
-                                        "Unknown MapEvents instance: ${it::class.java.simpleName}")
+                                        "Unknown MapEvents instance: ${it::class.java.simpleName}"
+                                    )
                                 }
                             }
                         }
@@ -218,19 +242,41 @@ class MainViewModel @Inject constructor(
         }
     }
 
+    private suspend fun closeRouteDetails() {
+        resetRoute()
+
+        showPoiDetails()
+        sendStateToUI(MapStates.HighlightSelectedMarker())
+        _selectedPoi.value = _originPoi.value
+        _originPoi.value = null
+    }
+
+    fun onPermissionsResult(arePermissionsGranted: Boolean) = viewModelScope.launch {
+        locationStatusLiveData.postValue(LocationStatus(arePermissionsGranted))
+    }
+
     private suspend fun showPoiDetails() {
+        val isLocationEnabled = locationStatusLiveData.value?.isLocationEnabled ?: false
+
         sendStateToUI(MapStates.HideCurrentLocationFab)
-        sendStateToUI(MapStates.ShowDistanceToCurrentLocation)
-        sendStateToUI(MapStates.ShowPoiDetails)
+
+        if (isLocationEnabled) {
+            sendStateToUI(MapStates.ShowDistanceToCurrentLocation)
+            sendStateToUI(MapStates.ShowPoiDetails())
+        } else {
+            sendStateToUI(MapStates.ShowPoiDetails(_originPoi.value))
+        }
     }
 
     private suspend fun prepareRoute() {
         isPreparingRoute = true
+        val isLocationEnabled = locationStatusLiveData.value?.isLocationEnabled ?: false
 
         sendStateToUI(MapStates.HidePoiDetails)
-        sendStateToUI(MapStates.ShowRouteDetails())
-        sendStateToUI(MapStates.CameraOnRoute())
-        sendStateToUI(MapStates.DrawRouteOnMap())
+        sendStateToUI(MapStates.SetRouteMarkers(isLocationEnabled))
+        sendStateToUI(MapStates.ShowRouteDetails(isLocationEnabled))
+        sendStateToUI(MapStates.CameraOnRoute(isLocationEnabled))
+        sendStateToUI(MapStates.DrawRouteOnMap(isLocationEnabled))
     }
 
     private suspend fun resetRoute() {

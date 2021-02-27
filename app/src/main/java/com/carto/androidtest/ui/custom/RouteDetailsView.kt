@@ -64,6 +64,8 @@ class RouteDetailsView @JvmOverloads constructor(
         this.animation = AnimationUtils.loadAnimation(context, R.anim.slide_to_top)
         isVisible = false
 
+        clearInfo()
+
         onVisibilityChangedListener?.onHide()
     }
 
@@ -89,5 +91,10 @@ class RouteDetailsView @JvmOverloads constructor(
                 )
             }
         }
+    }
+
+    private fun clearInfo() {
+        setAddressFrom("")
+        setAddressTo("")
     }
 }
