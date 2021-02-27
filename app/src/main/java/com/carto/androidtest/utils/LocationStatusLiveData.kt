@@ -7,9 +7,9 @@ import android.content.IntentFilter
 import android.location.LocationManager
 import androidx.lifecycle.MutableLiveData
 
-data class GPSStatus(val isGPSEnabled: Boolean)
+data class LocationStatus(val isLocationEnabled: Boolean)
 
-class GPSStatusLiveData(private val context: Context?): MutableLiveData<GPSStatus>() {
+class LocationStatusLiveData(private val context: Context?): MutableLiveData<LocationStatus>() {
     override fun onActive() {
         super.onActive()
         context?.registerReceiver(gpsReceiver, IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION))
@@ -25,8 +25,9 @@ class GPSStatusLiveData(private val context: Context?): MutableLiveData<GPSStatu
             val locationManager =
                 (context?.getSystemService(Context.LOCATION_SERVICE)) as LocationManager
             val isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+            val isLocationPermissionGranted = PermissionsManager.areAllPermissionsGranted(context)
 
-            postValue(GPSStatus(isGPSEnabled))
+            postValue(LocationStatus(isLocationPermissionGranted && isGPSEnabled))
         }
     }
 }

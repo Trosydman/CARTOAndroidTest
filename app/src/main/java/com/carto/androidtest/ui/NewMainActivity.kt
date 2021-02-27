@@ -6,7 +6,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.carto.androidtest.BuildConfig
 import com.carto.androidtest.databinding.ActivityNewMainBinding
-import com.carto.androidtest.utils.GPSStatusLiveData
+import com.carto.androidtest.utils.LocationStatusLiveData
 import com.carto.androidtest.utils.PermissionsManager
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
@@ -37,7 +37,7 @@ class NewMainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        viewModel.gpsStatusLiveData = GPSStatusLiveData(this)
+        viewModel.locationStatusLiveData = LocationStatusLiveData(this)
 
         PermissionsManager
             .init()

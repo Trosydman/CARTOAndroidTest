@@ -227,8 +227,8 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
             }
         }
 
-        viewModel.gpsStatusLiveData.observe(viewLifecycleOwner) { gpsStatus ->
-            changeCurrentLocationMarkerIcon(gpsStatus.isGPSEnabled)
+        viewModel.locationStatusLiveData.observe(viewLifecycleOwner) { gpsStatus ->
+            changeCurrentLocationMarkerIcon(gpsStatus.isLocationEnabled)
         }
 
         viewModel.pois.observe(viewLifecycleOwner) {
@@ -289,13 +289,9 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
     }
 
     private fun changeCurrentLocationMarkerIcon(
-        isGPSEnabled: Boolean? = viewModel.gpsStatusLiveData.value?.isGPSEnabled) {
-        val areAllPermissionGranted = context?.let {
-            PermissionsManager.areAllPermissionsGranted(it)
-        } ?: false
-        val isLocationEnabled = isGPSEnabled ?: false
+        isLocationEnabled: Boolean? = viewModel.locationStatusLiveData.value?.isLocationEnabled) {
 
-        val iconDrawableID = if (areAllPermissionGranted && isLocationEnabled) {
+        val iconDrawableID = if (isLocationEnabled == true) {
             R.drawable.ic_bluedot
         } else {
             R.drawable.ic_greydot
