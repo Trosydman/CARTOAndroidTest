@@ -1,5 +1,6 @@
 package com.carto.androidtest.ui.map
 
+import android.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
@@ -258,6 +259,14 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
                         binding.routeDetails.isNavigating(false)
                     }
 
+                    is MapStates.ShowHelpMessage -> {
+                        AlertDialog.Builder(context)
+                            .setCancelable(false)
+                            .setMessage(R.string.help)
+                            .setPositiveButton(R.string.action_ok, null)
+                            .show()
+                    }
+
                     else -> {
                         if (BuildConfig.DEBUG) {
                             throw IllegalStateException(
@@ -418,7 +427,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
             }
 
             helpButton.setOnClickListener {
-                // TODO
+                sendEvent(MapEvents.OnHelpButtonClicked)
             }
         }
     }

@@ -17,6 +17,7 @@
     <string name="timeInHours">%1$sh</string>
     <string name="navigating">YOU ARE NAVIGATING</string>
 
+    <string name="action_ok">OK</string>
     <string name="action_settings">Settings</string>
     <string name="action_cancel">Cancel</string>
 </resources>

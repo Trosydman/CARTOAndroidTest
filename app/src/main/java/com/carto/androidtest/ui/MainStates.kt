@@ -27,6 +27,7 @@ sealed class MainStates {
         data class SetRouteMarkers(val isFromCurrentLocation: Boolean): MapStates()
         object StartNavigation : MapStates()
         object StopNavigation : MapStates()
+        object ShowHelpMessage : MapStates()
     }
 
     sealed class PoisListStates: MainStates() {

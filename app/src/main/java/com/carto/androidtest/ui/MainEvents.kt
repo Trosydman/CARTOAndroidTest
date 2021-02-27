@@ -13,6 +13,7 @@ sealed class MainEvents {
         object OnRouteDetailsClosed : MapEvents()
         object OnBackPressed : MapEvents()
         object OnSearchButtonClicked : MapEvents()
+        object OnHelpButtonClicked : MapEvents()
     }
 
     sealed class PoisListEvents: MainEvents() {

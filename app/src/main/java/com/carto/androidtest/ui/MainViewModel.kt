@@ -205,6 +205,11 @@ class MainViewModel @Inject constructor(
                                 sendStateToUI(MapStates.OpenPoiList)
                             }
 
+
+                            is MapEvents.OnHelpButtonClicked -> {
+                                sendStateToUI(MapStates.ShowHelpMessage)
+                            }
+
                             else -> {
                                 if (BuildConfig.DEBUG) {
                                     throw IllegalStateException(
