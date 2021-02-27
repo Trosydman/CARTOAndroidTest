@@ -128,10 +128,16 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
                     }
 
                     is MapStates.ShowFab -> {
-                        if (it.isPreparingRoute) {
-                            binding.currentLocationFAB.setImageResource(R.drawable.ic_gps_cursor)
-                        } else {
-                            binding.currentLocationFAB.setImageResource(R.drawable.ic_location)
+                        when {
+                            it.isPreparingRoute -> {
+                                binding.currentLocationFAB.setImageResource(R.drawable.ic_gps_cursor)
+                            }
+                            it.isNavigating -> {
+                                binding.currentLocationFAB.setImageResource(R.drawable.ic_close)
+                            }
+                            else -> {
+                                binding.currentLocationFAB.setImageResource(R.drawable.ic_location)
+                            }
                         }
 
                         binding.currentLocationFAB.show()
@@ -242,6 +248,14 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
                             currentPoi.id == it.poiId
                         }.values.first()
                         sendEvent(MapEvents.OnMarkerClicked(it.poiId))
+                    }
+
+                    is MapStates.StartNavigation -> {
+                        binding.routeDetails.isNavigating(true)
+                    }
+
+                    is MapStates.StopNavigation -> {
+                        binding.routeDetails.isNavigating(false)
                     }
 
                     else -> {
@@ -396,7 +410,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
             }
 
             currentLocationFAB.setOnClickListener {
-                sendEvent(MapEvents.OnCurrentLocationFabClicked)
+                sendEvent(MapEvents.OnFabClicked)
             }
 
             searchButton.setOnClickListener {

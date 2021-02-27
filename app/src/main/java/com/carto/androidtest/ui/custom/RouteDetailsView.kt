@@ -42,6 +42,11 @@ class RouteDetailsView @JvmOverloads constructor(
                 return@setOnTouchListener true
             }
 
+            // This will disable the touch to be propagated to the view below (close button)
+            binding.navigatingBanner.setOnTouchListener { _, _ ->
+                return@setOnTouchListener true
+            }
+
             binding.closeButton.setOnClickListener {
                 onClickListener?.onCloseButtonClicked()
             }
@@ -67,6 +72,10 @@ class RouteDetailsView @JvmOverloads constructor(
         clearInfo()
 
         onVisibilityChangedListener?.onHide()
+    }
+
+    fun isNavigating(isNavigating: Boolean) {
+        binding.navigatingBanner.isVisible = isNavigating
     }
 
     fun setAddressFrom(address: String) {

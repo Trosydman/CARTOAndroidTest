@@ -79,4 +79,21 @@
         app:layout_constraintEnd_toEndOf="@+id/addressFrom"
         app:layout_constraintStart_toEndOf="@+id/endingRouteIcon"
         app:layout_constraintTop_toTopOf="@+id/endingRouteIcon" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/navigatingBanner"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/background_rounded_grey"
+        android:backgroundTint="?colorPrimary"
+        android:gravity="center"
+        android:text="@string/navigating"
+        android:textAppearance="?textAppearanceHeadline5"
+        android:textColor="?colorOnPrimary"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

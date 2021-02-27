@@ -89,6 +89,7 @@ class MainViewModel @Inject constructor(
         get() = _selectedPoi
 
     private var isPreparingRoute: Boolean = false
+    private var isNavigating: Boolean = false
 
     init {
         viewModelScope.launch {
@@ -112,6 +113,10 @@ class MainViewModel @Inject constructor(
                             }
 
                             is MapEvents.OnMarkerClicked -> {
+                                if (isNavigating) {
+                                    return@collect
+                                }
+
                                 val isLocationEnabled =
                                     locationStatusLiveData.value?.isLocationEnabled ?: false
 
@@ -143,7 +148,7 @@ class MainViewModel @Inject constructor(
                             }
 
                             is MapEvents.OnPoiDetailsHide -> {
-                                sendStateToUI(MapStates.ShowFab(isPreparingRoute))
+                                sendStateToUI(MapStates.ShowFab(isPreparingRoute = isPreparingRoute))
                                 if (isPreparingRoute.not()) {
                                     sendStateToUI(MapStates.ResetHighlightedMarker)
                                 }
@@ -156,9 +161,13 @@ class MainViewModel @Inject constructor(
                                 }
                             }
 
-                            is MapEvents.OnCurrentLocationFabClicked -> {
-                                if (isPreparingRoute.not()) {
+                            is MapEvents.OnFabClicked -> {
+                                if (isPreparingRoute.not() && isNavigating.not()) {
                                     sendStateToUI(MapStates.HighlightCurrentLocation)
+                                } else if (isPreparingRoute && isNavigating.not()) {
+                                    startNavigation()
+                                } else if (isNavigating) {
+                                    stopNavigation()
                                 }
                             }
 
@@ -172,6 +181,10 @@ class MainViewModel @Inject constructor(
 
                             is MapEvents.OnBackPressed -> {
                                 when {
+
+                                    isNavigating -> {
+                                        stopNavigation()
+                                    }
 
                                     isPreparingRoute -> {
                                         closeRouteDetails()
@@ -286,6 +299,20 @@ class MainViewModel @Inject constructor(
         sendStateToUI(MapStates.ResetRoute)
         sendStateToUI(MapStates.ResetHighlightedMarker)
         sendStateToUI(MapStates.ShowFab(isPreparingRoute))
+    }
+
+    private suspend fun startNavigation() {
+        isNavigating = true
+
+        sendStateToUI(MapStates.StartNavigation)
+        sendStateToUI(MapStates.ShowFab(isNavigating = isNavigating))
+    }
+
+    private suspend fun stopNavigation() {
+        isNavigating = false
+
+        sendStateToUI(MapStates.StopNavigation)
+        sendStateToUI(MapStates.ShowFab(isPreparingRoute = isPreparingRoute))
     }
 
     private suspend fun sendStateToUI(states: MainStates) = viewModelScope.launch {

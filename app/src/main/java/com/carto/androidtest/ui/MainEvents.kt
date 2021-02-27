@@ -8,7 +8,7 @@ sealed class MainEvents {
         data class OnMarkerClicked(val relatedPoiId: String) : MapEvents()
         object OnCurrentLocationMarkerClicked: MapEvents()
         object OnPoiDetailsHide : MapEvents()
-        object OnCurrentLocationFabClicked : MapEvents()
+        object OnFabClicked : MapEvents()
         object OnDirectionsFabClicked : MapEvents()
         object OnRouteDetailsClosed : MapEvents()
         object OnBackPressed : MapEvents()
