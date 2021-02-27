@@ -8,6 +8,8 @@ import com.carto.androidtest.ui.MainEvents.MapEvents
 import com.carto.androidtest.ui.MainEvents.PoisListEvents
 import com.carto.androidtest.ui.MainStates.MapStates
 import com.carto.androidtest.ui.MainStates.PoisListStates
+import com.carto.androidtest.utils.GPSStatus
+import com.carto.androidtest.utils.GPSStatusLiveData
 import com.carto.androidtest.utils.Result
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -72,6 +74,8 @@ class MainViewModel @Inject constructor(
             pois
         }
     }.asLiveData()
+
+    lateinit var gpsStatusLiveData: GPSStatusLiveData
 
     private val _selectedPoi = MutableLiveData<Poi?>()
     val selectedPoi: LiveData<Poi?>
@@ -216,6 +220,10 @@ class MainViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun onPermissionsResult(arePermissionsGranted: Boolean) = viewModelScope.launch {
+        gpsStatusLiveData.postValue(GPSStatus(arePermissionsGranted))
     }
 
     private suspend fun showPoiDetails() {
