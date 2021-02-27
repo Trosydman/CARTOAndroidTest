@@ -20,6 +20,7 @@ import com.carto.androidtest.ui.MainViewModel
 import com.carto.androidtest.ui.NewMainActivity
 import com.carto.androidtest.ui.custom.PoiDetailsBottomSheet
 import com.carto.androidtest.ui.custom.RouteDetailsView
+import com.carto.androidtest.utils.PermissionsManager
 import com.carto.androidtest.utils.extensions.beautifyDistance
 import com.carto.androidtest.utils.extensions.beautifyTime
 import com.carto.androidtest.utils.extensions.distanceTo
@@ -85,7 +86,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
     private var _binding: FragmentMapBinding? = null
 
     private lateinit var map: GoogleMap
-    private var currentLocationMarkerOptions: MarkerOptions? = null
+    private var currentLocationMarker: Marker? = null
     private var poiIdsMarkers = mutableMapOf<String, Marker>()
     private var lastClickedMarker: Marker? = null
 
@@ -145,7 +146,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
 
                     is MapStates.ShowDistanceToCurrentLocation -> {
                         val startingPosition = lastClickedMarker?.position ?: return@collect
-                        val endingPosition = currentLocationMarkerOptions?.position ?: return@collect
+                        val endingPosition = currentLocationMarker?.position ?: return@collect
                         val distance = startingPosition.distanceTo(endingPosition,
                             requireContext())
 
@@ -154,7 +155,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
                     }
 
                     is MapStates.HighlightCurrentLocation -> {
-                        highlightCurrentLocation(currentLocationMarkerOptions?.position)
+                        highlightCurrentLocation(currentLocationMarker?.position)
                     }
 
                     is MapStates.HighlightSelectedMarker -> {
@@ -178,7 +179,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
                     is MapStates.CameraOnRoute -> {
                         if (it.isFromCurrentLocation) {
                             val boundsBuilder = LatLngBounds.Builder()
-                            boundsBuilder.include(currentLocationMarkerOptions?.position
+                            boundsBuilder.include(currentLocationMarker?.position
                                 ?: return@collect)
                             boundsBuilder.include(lastClickedMarker?.position ?: return@collect)
 
@@ -190,7 +191,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
                     is MapStates.DrawRouteOnMap -> {
                         if (it.isFromCurrentLocation ) {
                             drawRoute(
-                                currentLocationMarkerOptions?.position ?: return@collect,
+                                currentLocationMarker?.position ?: return@collect,
                                 lastClickedMarker?.position ?: return@collect
                             )
                         } else {
@@ -226,6 +227,10 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
             }
         }
 
+        viewModel.gpsStatusLiveData.observe(viewLifecycleOwner) { gpsStatus ->
+            changeCurrentLocationMarkerIcon(gpsStatus.isGPSEnabled)
+        }
+
         viewModel.pois.observe(viewLifecycleOwner) {
             if (it.isNotEmpty()) {
                 val markerBounds = addMarkers(it)
@@ -236,7 +241,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
                     }
 
                     override fun onCancel() {
-                        // TODO
+                        map.setLatLngBoundsForCameraTarget(markerBounds)
                     }
                 })
             }
@@ -257,7 +262,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
 
         _binding = null
         poiDetailsSheet = null
-        currentLocationMarkerOptions = null
+        currentLocationMarker = null
         lastClickedMarker = null
     }
 
@@ -273,14 +278,30 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
     }
 
     private fun addCurrentLocationMarker(location: LatLng) {
-        val blueDotIcon = BitmapDescriptorFactory.fromResource(R.drawable.ic_bluedot)
-        currentLocationMarkerOptions = MarkerOptions()
+        val currentLocationMarkerOptions = MarkerOptions()
             .title(CURRENT_FAKE_LOCATION_ID)
             .position(location)
-            .icon(blueDotIcon)
 
-        map.addMarker(currentLocationMarkerOptions)
+        currentLocationMarker = map.addMarker(currentLocationMarkerOptions)
+        changeCurrentLocationMarkerIcon()
+
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, MapZoomLevel.CONTINENT.level))
+    }
+
+    private fun changeCurrentLocationMarkerIcon(
+        isGPSEnabled: Boolean? = viewModel.gpsStatusLiveData.value?.isGPSEnabled) {
+        val areAllPermissionGranted = context?.let {
+            PermissionsManager.areAllPermissionsGranted(it)
+        } ?: false
+        val isLocationEnabled = isGPSEnabled ?: false
+
+        val iconDrawableID = if (areAllPermissionGranted && isLocationEnabled) {
+            R.drawable.ic_bluedot
+        } else {
+            R.drawable.ic_greydot
+        }
+
+        currentLocationMarker?.setIcon(BitmapDescriptorFactory.fromResource(iconDrawableID))
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -371,7 +392,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
         return boundsBuilder.build()
     }
 
-    private fun highlightCurrentLocation(location: LatLng? = currentLocationMarkerOptions?.position) {
+    private fun highlightCurrentLocation(location: LatLng? = currentLocationMarker?.position) {
         if (location != null) {
             map.animateCamera(CameraUpdateFactory.newLatLngZoom(location,
                 MapZoomLevel.STREETS.level))
