@@ -1,7 +1,9 @@
 package com.carto.androidtest.ui.map
 
 import android.app.AlertDialog
+import android.content.Context
 import android.graphics.Color
+import android.location.LocationManager
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
@@ -21,6 +23,7 @@ import com.carto.androidtest.ui.MainViewModel
 import com.carto.androidtest.ui.NewMainActivity
 import com.carto.androidtest.ui.custom.PoiDetailsBottomSheet
 import com.carto.androidtest.ui.custom.RouteDetailsView
+import com.carto.androidtest.utils.PermissionsManager
 import com.carto.androidtest.utils.extensions.beautifyDistance
 import com.carto.androidtest.utils.extensions.beautifyTime
 import com.carto.androidtest.utils.extensions.distanceTo
@@ -352,7 +355,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
     }
 
     private fun changeCurrentLocationMarkerIcon(
-        isLocationEnabled: Boolean? = viewModel.locationStatusLiveData.value?.isLocationEnabled) {
+        isLocationEnabled: Boolean? = isLocationEnable()) {
 
         val iconDrawableID = if (isLocationEnabled == true) {
             R.drawable.ic_bluedot
@@ -361,6 +364,16 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
         }
 
         currentLocationMarker?.setIcon(BitmapDescriptorFactory.fromResource(iconDrawableID))
+    }
+
+    private fun isLocationEnable(): Boolean {
+        val currentContext = context ?: return false
+        val locationManager =
+            (context?.getSystemService(Context.LOCATION_SERVICE)) as LocationManager
+        val isGPSEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+        val isLocationPermissionGranted = PermissionsManager.areAllPermissionsGranted(currentContext)
+
+        return isLocationPermissionGranted && isGPSEnabled
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
