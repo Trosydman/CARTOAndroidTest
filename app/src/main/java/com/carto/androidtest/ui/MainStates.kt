@@ -1,5 +1,6 @@
 package com.carto.androidtest.ui
 
+import com.carto.androidtest.domain.model.Poi
 import com.google.android.gms.maps.model.LatLng
 
 sealed class MainStates {
@@ -10,7 +11,7 @@ sealed class MainStates {
         data class ShowFab(val isPreparingRoute: Boolean = false) : MapStates()
         object HideCurrentLocationFab : MapStates()
         object ResetHighlightedMarker : MapStates()
-        object ShowPoiDetails : MapStates()
+        data class ShowPoiDetails(val poi: Poi? = null) : MapStates()
         object ShowDistanceToCurrentLocation : MapStates()
         object HighlightCurrentLocation : MapStates()
         data class HighlightSelectedMarker(val animateCamera: Boolean = true) : MapStates()
@@ -22,6 +23,7 @@ sealed class MainStates {
         object FinishApp : MapStates()
         object OpenPoiList : MapStates()
         data class HighlightPoiMarker(val poiId: String) : MapStates()
+        data class SetRouteMarkers(val isFromCurrentLocation: Boolean): MapStates()
     }
 
     sealed class PoisListStates: MainStates() {

@@ -20,7 +20,6 @@ import com.carto.androidtest.ui.MainViewModel
 import com.carto.androidtest.ui.NewMainActivity
 import com.carto.androidtest.ui.custom.PoiDetailsBottomSheet
 import com.carto.androidtest.ui.custom.RouteDetailsView
-import com.carto.androidtest.utils.PermissionsManager
 import com.carto.androidtest.utils.extensions.beautifyDistance
 import com.carto.androidtest.utils.extensions.beautifyTime
 import com.carto.androidtest.utils.extensions.distanceTo
@@ -87,8 +86,10 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
 
     private lateinit var map: GoogleMap
     private var currentLocationMarker: Marker? = null
-    private var poiIdsMarkers = mutableMapOf<String, Marker>()
+    private var poiIdsMarkers = mutableMapOf<Poi, Marker>()
     private var lastClickedMarker: Marker? = null
+    private var originMarker: Marker? = null
+    private var destinationMarker: Marker? = null
 
     private var poiDetailsSheet: PoiDetailsBottomSheet? = null
     private var routeLine: Polyline? = null
@@ -141,6 +142,10 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
                     }
 
                     is MapStates.ShowPoiDetails -> {
+                        if (it.poi != null) {
+                            poiDetailsSheet?.fillDetails(it.poi)
+                        }
+
                         poiDetailsSheet?.show()
                     }
 
@@ -164,10 +169,34 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
                         }
                     }
 
+                    is MapStates.SetRouteMarkers -> {
+                        if (it.isFromCurrentLocation) {
+                            originMarker = currentLocationMarker
+                            destinationMarker = lastClickedMarker
+                        } else {
+                            if (destinationMarker != null) {
+                                originMarker = lastClickedMarker
+                            } else {
+                                destinationMarker = lastClickedMarker
+                            }
+                        }
+                    }
+
                     is MapStates.ShowRouteDetails -> {
                         with(binding.routeDetails) {
                             isStartingFromCurrentLocation(it.isFromCurrentLocation)
-                            setAddressTo(viewModel.selectedPoi.value!!.title)
+
+                            if (!it.isFromCurrentLocation) {
+                                originMarker?.let {
+                                    val originPoi = poiIdsMarkers.filterValues { marker ->
+                                        marker == originMarker
+                                    }.keys.first()
+
+                                    setAddressFrom(originPoi.title)
+                                }
+                            }
+
+                            setAddressTo(viewModel.destinationPoi.value!!.title)
                             show()
                         }
                     }
@@ -177,30 +206,26 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
                     }
 
                     is MapStates.CameraOnRoute -> {
-                        if (it.isFromCurrentLocation) {
-                            val boundsBuilder = LatLngBounds.Builder()
-                            boundsBuilder.include(currentLocationMarker?.position
-                                ?: return@collect)
-                            boundsBuilder.include(lastClickedMarker?.position ?: return@collect)
+                        val boundsBuilder = LatLngBounds.Builder()
+                        boundsBuilder.include(originMarker?.position
+                            ?: return@collect)
+                        boundsBuilder.include(destinationMarker?.position ?: return@collect)
 
-                            map.animateCamera(CameraUpdateFactory.newLatLngBounds(
-                                boundsBuilder.build(), ROUTE_CAMERA_PADDING.toPx()))
-                        }
+                        map.animateCamera(CameraUpdateFactory.newLatLngBounds(
+                            boundsBuilder.build(), ROUTE_CAMERA_PADDING.toPx()))
                     }
 
                     is MapStates.DrawRouteOnMap -> {
-                        if (it.isFromCurrentLocation ) {
-                            drawRoute(
-                                currentLocationMarker?.position ?: return@collect,
-                                lastClickedMarker?.position ?: return@collect
-                            )
-                        } else {
-                            // TODO
-                        }
+                        drawRoute(
+                            originMarker?.position ?: return@collect,
+                            destinationMarker?.position ?: return@collect
+                        )
                     }
 
                     is MapStates.ResetRoute -> {
                         routeLine?.remove()
+                        originMarker = null
+                        destinationMarker = null
                     }
 
                     is MapStates.FinishApp -> {
@@ -213,7 +238,9 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
 
                     is MapStates.HighlightPoiMarker -> {
                         resetMarker(lastClickedMarker)
-                        lastClickedMarker = poiIdsMarkers[it.poiId]
+                        lastClickedMarker = poiIdsMarkers.filterKeys { currentPoi ->
+                            currentPoi.id == it.poiId
+                        }.values.first()
                         sendEvent(MapEvents.OnMarkerClicked(it.poiId))
                     }
 
@@ -250,6 +277,17 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
         viewModel.selectedPoi.observe(viewLifecycleOwner) { poi ->
             if (poi != null) {
                 poiDetailsSheet?.fillDetails(poi)
+            }
+        }
+
+        viewModel.originPoi.observe(viewLifecycleOwner) { poi ->
+            if (poi != null) {
+                binding.routeDetails.setAddressFrom(poi.title)
+            }
+        }
+
+        viewModel.destinationPoi.observe(viewLifecycleOwner) { poi ->
+            if (poi != null) {
                 binding.routeDetails.setAddressTo(poi.title)
             }
         }
@@ -264,6 +302,8 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
         poiDetailsSheet = null
         currentLocationMarker = null
         lastClickedMarker = null
+        originMarker = null
+        destinationMarker = null
     }
 
     override fun onBackPressed(): Boolean {
@@ -380,7 +420,7 @@ class MapFragment : Fragment(R.layout.fragment_map), OnMapReadyCallback,
                 .position(latLng)
 
             val newMarker = map.addMarker(newMarkerOptions)
-            poiIdsMarkers[poi.id] = newMarker
+            poiIdsMarkers[poi] = newMarker
 
             boundsBuilder.include(latLng)
         }
