@@ -126,7 +126,7 @@ class PoisListDialogFragment : BottomSheetDialogFragment(), PoisListAdapter.OnPo
             poisList.adapter = poisListAdapter
 
             closeButton.setOnClickListener {
-                findNavController().popBackStack()
+                sendEvent(PoisListEvents.OnCloseButtonClicked)
             }
 
             searchTextInput.editText?.doOnTextChanged { inputText, _, _, _ ->

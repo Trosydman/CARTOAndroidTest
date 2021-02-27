@@ -12,10 +12,7 @@ import com.carto.androidtest.utils.Result
 import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -34,8 +31,8 @@ class MainViewModel @Inject constructor(
     val eventsChannel = Channel<MainEvents>()
     private val events = eventsChannel.receiveAsFlow()
 
-    private val statesChannel = Channel<MainStates>()
-    val states = statesChannel.receiveAsFlow()
+    private val _states = MutableSharedFlow<MainStates>()
+    val states = _states.asSharedFlow()
 
     val searchQuery = savedStateHandle.getLiveData("searchQuery", "")
 
@@ -246,6 +243,6 @@ class MainViewModel @Inject constructor(
     }
 
     private suspend fun sendStateToUI(states: MainStates) = viewModelScope.launch {
-        statesChannel.send(states)
+        _states.emit(states)
     }
 }
