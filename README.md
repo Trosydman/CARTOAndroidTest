@@ -2,6 +2,64 @@
 <img src="./images/CARTO-android.png" width="500">
 </p>
 
+# My CARTO Android Test by Carlos Mesquita
+
+## Introduction
+Hi! My name is Carlos Mesquita. I forked the [CARTOAndroidTest](https://github.com/CartoDB/CARTOAndroidTest) in order to apply for the _Android Engineer (Remote)_ position.
+I want to highlight that I would have loved to go far beyong in some aspects but due to my current employment, I couldn't expend full time on this test. I hope you can understand.
+Apart from that, it has been a fun and challenging technical test. I hope you can appreciate it as much as I did. **Let's GO!**
+
+## Architecture
+In this project I made use of the MVVM pattern. The architecture is based on the following parts:
+### UI
+It is built on top of the **NewMainActivity**, from where we can differentiate 2 Fragments:
+  * **MapFragment**: where the map and related views are displayed.
+  * **PoisListDialogFragment**: for the list of POIs and the search field.
+
+Both Fragments and the Activity are consuming the same ViewModel: **MainViewModel**. All of them where highly related between them, so I thought it would make sense.
+
+The comunication between the pure UI elements (Activity + Fragments) and the ViewModel is made by the **unidirectional event-state data flow pattern**. This pattern allows to separate the UI events (from Activity and Fragments) from the UI states (requested by the MainViewModel). It highly achieves to decouple the UI logic and the business logic.
+
+Both of this data flows are channeled between 2 different types of objects: **kotlinx.coroutines.channels.Channel** (for UI events) and **kotlinx.coroutines.flow.MutableSharedFlow** (for UI states through all Fragments and the Activity).
+
+### Repository + DataSource
+
+It was built a **PoiRepository** which consumes from a **remote data source** that provides all POIs information from the given CARTO endpoint using **Retrofit**.
+
+A separate ***DataSource*** was created because it was planned to create a _LocalDataSource_ to be able to save POIs locally in a Room database. Unfortunatelly this was not possible to acomplish in the given time.
+
+### Data Models
+In order to keep the UI model (domain model) separate from any DTO model, I created 2 different types of models:
+  * **Poi** as domain model
+  * **PoiDTO** as the remote source model
+Both of them make use of their own mappers which are used in the Repository layer to map the DTOs to the domain model when retrieving the list of POIs.
+
+## Missing parts
+
+As explained above, due to my current situation I didn't have much more time to fulfill with all features I wanted to implement in this project, e.g.:
+- **LocalDataSource** to save POIs locally
+- **Depper testing**
+- **Better design system**: with a proper day/night theme crafted by custom and unique colors, text appearances, fonts, dimensions, animations... to highlight the CARTO brand
+- **Code beautyfication**: not only correct formatting and clarity or removal of old/unused files and resources, but also proper KDocs to document properly the code.
+
+
+## APK and Conclusion
+This is only the pick of the iceberg! There is way more things that I am thrilled to share with you and also to learn from you.
+
+As required, here you can find the [**APK**](https://drive.google.com/file/d/1YivHqq9CjoDb5UlNyDr6CR3pSIwH8Zmo/view?usp=sharing) of my proposal.
+
+
+I hope to speak soon with you.
+Cheers,
+
+**Carlos Mesquita**
+
+
+
+- - - -
+
+
+
 # CARTO Android Test
 
 We have developed an Android app showing traffic cameras from a specific dataset. The app positions the traffic cameras on a map according to their latitude and longitude.

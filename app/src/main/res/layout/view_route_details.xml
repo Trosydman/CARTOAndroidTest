@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/background_rounded_grey">
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/closeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        android:background="?selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_close"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/startingRouteIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/closeButton"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintEnd_toStartOf="@id/addressFrom"
+        app:layout_constraintStart_toEndOf="@+id/closeButton"
+        app:layout_constraintTop_toTopOf="@+id/closeButton"
+        tools:srcCompat="@drawable/ic_location" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/addressFrom"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="16dp"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:hint="@string/choose_starting"
+        android:maxLines="1"
+        app:layout_constraintBottom_toBottomOf="@+id/startingRouteIcon"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/startingRouteIcon"
+        app:layout_constraintTop_toTopOf="@+id/startingRouteIcon" />
+
+    <View
+        android:id="@+id/addressDivider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="@color/light_grey"
+        app:layout_constraintBottom_toTopOf="@+id/addressTo"
+        app:layout_constraintEnd_toEndOf="@+id/addressFrom"
+        app:layout_constraintStart_toStartOf="@+id/addressFrom"
+        app:layout_constraintTop_toBottomOf="@+id/addressFrom" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/endingRouteIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintEnd_toEndOf="@+id/startingRouteIcon"
+        app:layout_constraintStart_toStartOf="@id/startingRouteIcon"
+        app:layout_constraintTop_toBottomOf="@id/startingRouteIcon"
+        app:srcCompat="@drawable/ic_marker" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/addressTo"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:ellipsize="end"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        app:layout_constraintBottom_toBottomOf="@+id/endingRouteIcon"
+        app:layout_constraintEnd_toEndOf="@+id/addressFrom"
+        app:layout_constraintStart_toEndOf="@+id/endingRouteIcon"
+        app:layout_constraintTop_toTopOf="@+id/endingRouteIcon" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/navigatingBanner"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/background_rounded_grey"
+        android:backgroundTint="?colorPrimary"
+        android:gravity="center"
+        android:text="@string/navigating"
+        android:textAppearance="?textAppearanceHeadline5"
+        android:textColor="?colorOnPrimary"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -10,6 +10,14 @@
     <string name="your_location">Your location</string>
     <string name="help">GPS enabled + Location permissions granted ==> Location is enabled (fake position in Australia, routes from there to poi). Otherwise ==> Location is disabled (routes from poi to poi).</string>
     <string name="distance">(%1$s%2$s)</string>
+    <string name="distanceInMeters">%1$sm</string>
+    <string name="distanceInKms">%1$sKm</string>
     <string name="time_distance">%1$s %2$s</string>
+    <string name="timeInMinutes">%1$sm</string>
+    <string name="timeInHours">%1$sh</string>
     <string name="navigating">YOU ARE NAVIGATING</string>
+
+    <string name="action_ok">OK</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_cancel">Cancel</string>
 </resources>
